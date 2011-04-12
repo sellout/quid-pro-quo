@@ -86,6 +86,11 @@
 ;;; Change Log.
 ;;; ==========
 ;;;
+;;; 1999-08-03  Matthias Hoelzl  <tc@gauss.muc.de>
+;;;  * Removed the possibility to add a contract-specification-string
+;;;    to pre- and postconditions for acl5 compatibility.
+;;;  * Improved the output for pre- and postconditions without
+;;;    descriptions.
 ;;; 1998-10-14  Matthias Hoelzl  <tc@gauss.muc.de>
 ;;;  * Fixed the qualifiers to use dotted lists as required by the
 ;;;    standard (thanks to Douglas Thomas Crosher for setting me
@@ -161,20 +166,26 @@
 		:initarg :description
 		:initform "(no description available)"))
   (:report (lambda (condition stream)
-	     (format stream "Contract violation: ~A."
-		     (description condition)))))
+	     (if (description condition)
+		 (format stream "Contract violation: ~A."
+			 (description condition))
+	       (format stream "Contract violation.")))))
 
 (define-condition precondition-error (contract-violation-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream "Precondition violation: ~A."
-		     (description condition)))))
+	     (if (description condition)
+		 (format stream "Precondition violation: ~A."
+			 (description condition))
+	       (format stream "Precondition violation.")))))
 
 (define-condition postcondition-error (contract-violation-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream "Postcondition violation: ~A."
-		     (description condition)))))
+	     (if (description condition)
+		 (format stream "Postcondition violation: ~A."
+			 (description condition))
+	       (format stream "Postcondition violation.")))))
 
 (define-condition before-invariant-error (contract-violation-error)
   ()
@@ -318,7 +329,7 @@ The generic functions have method combination type `dbc'."
                 :method-combination #-mcl'(dbc:dbc)
                 #+mcl (ccl::%find-method-combination nil 'dbc nil)))))))
 
-(defun define-slot-accessor-invariants (class-name slot description)
+(defun define-slot-accessor-invariants (class-name slot)
   "Returns a list with method definitions for reader and writer
 invariants."
   (let ((accessor (getf (rest slot) :accessor)))
@@ -328,11 +339,10 @@ invariants."
                       (when accessor
                         `(setf ,accessor)))))
       (list (when reader
-              `(defmethod ,reader :invariant ,description
-		     ((object ,class-name))
+              `(defmethod ,reader :invariant ((object ,class-name))
                  (check-invariant object)))
             (when writer
-              `(defmethod ,writer :invariant ,description
+              `(defmethod ,writer :invariant
 		     (value (object ,class-name))
                  (declare (ignore value))
                  (check-invariant object)))))))
@@ -351,10 +361,7 @@ for CLASS-NAME and executing INVARIANT."
     (multiple-value-bind (invariant-form new-options)
                          (getf-and-remove :invariant options)
       (let ((documented-invariant (cadr invariant-form)))
-	(let ((description (if documented-invariant
-			       (car invariant-form)
-			     "(no description available)"))
-	      (invariant (or documented-invariant (car invariant-form))))
+	(let ((invariant (or documented-invariant (car invariant-form))))
 	  `(progn
 	     ,@(if slots
 		   (apply #'append
@@ -370,7 +377,7 @@ for CLASS-NAME and executing INVARIANT."
 		 (apply #'append
 			(mapcar (lambda (slot)
 				  (define-slot-accessor-invariants
-				    name slot description))
+				    name slot))
 				slots)))))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

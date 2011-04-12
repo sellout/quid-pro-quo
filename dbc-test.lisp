@@ -7,7 +7,8 @@
 (defpackage "DBC-TEST"
   (:use "DBC" "CL")
   (:shadowing-import-from "DBC"
-                          "DEFCLASS" "MAKE-INSTANCE" "DBC"))
+                          "DEFCLASS" "MAKE-INSTANCE" "DBC")
+  (:export "TEST-DBC"))
 
 (in-package "DBC-TEST")
 
@@ -25,35 +26,35 @@
   (print " >> test-dbc (around)")
   (call-next-method))
 
-(defmethod test-dbc :precondition "fixnum > 123" ((m fixnum) (n integer))
+(defmethod test-dbc :precondition ((m fixnum) (n integer))
   (print " >> precondition (fixnum integer)")
   (> m 123))
 
-(defmethod test-dbc :precondition "fixnum > 100" ((m integer) (n fixnum))
+(defmethod test-dbc :precondition ((m integer) (n fixnum))
   (print " >> precondition (integer fixnum)")
   (< n 100))
 
-(defmethod test-dbc :precondition "integer =" ((m integer) (n integer))
+(defmethod test-dbc :precondition ((m integer) (n integer))
   (print " >> precondition (integer integer)")
   (= m 12345678900987654321))
 
-(defmethod test-dbc :postcondition "999" ((m integer) (n fixnum))
+(defmethod test-dbc :postcondition ((m integer) (n fixnum))
   (print " >> postcondition (integer fixnum)")
   999)
 
-(defmethod test-dbc :postcondition "always true" ((m integer) (n integer))
+(defmethod test-dbc :postcondition  ((m integer) (n integer))
   (print " >> postcondition (integer integer)")
   t)
 
-(defmethod test-dbc :invariant "int invariant" ((m integer) (n integer))
+(defmethod test-dbc :invariant  ((m integer) (n integer))
   (print " >> invariant (integer integer)")
   'foo)
 
-(defmethod test-dbc :invariant "int fix" ((m fixnum) (n integer))
+(defmethod test-dbc :invariant  ((m fixnum) (n integer))
   (print " >> invariant (fixnum integer)")
   'foo)
 
-(defmethod test-dbc :invariant "fix fix" ((m integer) (n fixnum))
+(defmethod test-dbc :invariant  ((m integer) (n fixnum))
   (print " >> invariant (integer fixnum)")
   'foo)
 
@@ -66,10 +67,10 @@
   (list (+ m 1) (+ n 1)))
 
 #| Example:
-(test-dbc 1 2)
+(dbc-test:test-dbc 1 2)
 
 ;;; Fail:
-(test-dbc 1 12345678900987654321)
+(dbc-test:test-dbc 1 12345678900987654321)
 |#
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -173,26 +174,26 @@
 
 ;; Preconditions:
 
-(defmethod test-dbc :precondition "< 123" ((m test-2) (n test))
+(defmethod test-dbc :precondition ((m test-2) (n test))
   (print " >> precondition (test-2 test)")
   (< (my-slot m) 123))
 
-(defmethod test-dbc :precondition "null" ((m test) (n test-2))
+(defmethod test-dbc :precondition ((m test) (n test-2))
   (print " >> precondition (test test-2)")
   (null (another-slot n)))
 
-(defmethod test-dbc :precondition "zerop" ((m test) (n test))
+(defmethod test-dbc :precondition ((m test) (n test))
   (print " >> precondition (test test)")
   (not (zerop (my-slot m))))
 
 ;; Postconditions:
 
-(defmethod test-dbc :postcondition "null another-slot"
+(defmethod test-dbc :postcondition
       ((m test) (n test-2))
   (print " >> postcondition (test test-2)")
   (null (another-slot n)))
 
-(defmethod test-dbc :postcondition  "zerop" ((m test) (n test))
+(defmethod test-dbc :postcondition ((m test) (n test))
   (print " >> postcondition (test test)")
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
@@ -201,11 +202,11 @@
 
 #| Examples:
 
-(test-dbc (make-instance 'test :my-slot 1) (make-instance 'test))
+(dbc-test:test-dbc (make-instance 'test :my-slot 1) (make-instance 'test))
 
 ;;; Fail (precondition violation)
 ;;;
-(test-dbc (make-instance 'test) (make-instance 'test))
+(dbc-test:test-dbc (make-instance 'test) (make-instance 'test))
 
 ;;; The next call succeeds because the method TEST-DBC has a weakened
 ;;; precondition for first arguments of type TEST-2.
