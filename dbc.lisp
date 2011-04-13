@@ -82,17 +82,17 @@
 ;;; Have fun,
 ;;;    Matthias
 
-(cl:defpackage "DESIGN-BY-CONTRACT"
-  (:use "COMMON-LISP")
-  (:nicknames "DBC")
-  (:shadow cl:defclass cl:make-instance)
-  (:export "DBC" "DEFCLASS" "MAKE-INSTANCE"
-           "CONTRACT-VIOLATION-ERROR"
-           "PRECONDITION-ERROR" "POSTCONDITION-ERROR"
-           "INVARIANT-ERROR" "CREATION-INVARIANT-ERROR"
-           "BEFORE-INVARIANT-ERROR" "AFTER-INVARIANT-ERROR"))
+(defpackage design-by-contract
+  (:use #:cl)
+  (:nicknames #:dbc)
+  (:shadow #:defclass #:make-instance)
+  (:export #:dbc #:defclass #:make-instance
+           #:contract-violation-error
+           #:precondition-error #:postcondition-error
+           #:invariant-error #:creation-invariant-error
+           #:before-invariant-error #:after-invariant-error))
 
-(in-package "DBC")
+(in-package #:dbc)
 
 ;;; Enable all checks for testing purposes
 ;;;

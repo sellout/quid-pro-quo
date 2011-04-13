@@ -4,13 +4,12 @@
 
 ;; (in-package "USER")
 
-(defpackage "DBC-TEST"
-  (:use "DBC" "CL" "FIVEAM")
-  (:shadowing-import-from "DBC"
-                          "DEFCLASS" "MAKE-INSTANCE" "DBC")
-  (:export "TEST-DBC"))
+(defpackage dbc-test
+  (:use #:dbc #:cl #:fiveam)
+  (:shadowing-import-from #:dbc #:defclass #:make-instance)
+  (:export #:test-dbc))
 
-(in-package "DBC-TEST")
+(in-package #:dbc-test)
 
 (def-suite tests)
 
