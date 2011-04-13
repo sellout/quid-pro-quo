@@ -1,9 +1,3 @@
-;;; dbc-test.lisp
-;;;
-;;; Tests for the dbc package.
-
-;; (in-package "USER")
-
 (defpackage dbc-test
   (:use #:dbc #:cl #:fiveam)
   (:shadowing-import-from #:dbc #:defclass #:make-instance)
@@ -304,6 +298,3 @@
 (test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))
 (test-dbc-/ (make-instance 'feature-test :slot1 2)
             (make-instance 'feature-test :slot1 8))
-
-
-;;; End of file dbc-test.lisp

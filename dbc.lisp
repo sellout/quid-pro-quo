@@ -1,5 +1,3 @@
-;;; dbc.lisp
-
 (defpackage design-by-contract
   (:use #:cl)
   (:nicknames #:dbc)
@@ -242,5 +240,3 @@ directly be defined by the user.")))
     (unless (check-invariant object)
       (error 'creation-invariant-error :object object))
     object))
-
-;;; End of file dbc.lisp
