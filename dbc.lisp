@@ -145,8 +145,8 @@
   (:export "DBC" "DEFCLASS" "MAKE-INSTANCE"
            "CONTRACT-VIOLATION-ERROR"
            "PRECONDITION-ERROR" "POSTCONDITION-ERROR"
-           "BEFORE-INVARIANT-ERROR" "AFTER-INVARIANT-ERROR"
-           "CREATION-INVARIANT-ERROR"))
+           "INVARIANT-ERROR" "CREATION-INVARIANT-ERROR"
+           "BEFORE-INVARIANT-ERROR" "AFTER-INVARIANT-ERROR"))
 
 (in-package "DBC")
 
@@ -191,19 +191,22 @@
 			 (description condition))
 	       (format stream "Postcondition violation.")))))
 
-(define-condition before-invariant-error (contract-violation-error)
+(define-condition invariant-error (contract-violation-error)
+  ())
+
+(define-condition before-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
 	     (format stream "Invariant violation before method call:~% ~A."
 		     (description condition)))))
 
-(define-condition after-invariant-error (contract-violation-error)
+(define-condition after-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
 	     (format stream "Invariant violation after method call:~% ~A."
 		     (description condition)))))
 
-(define-condition creation-invariant-error (contract-violation-error)
+(define-condition creation-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
 	     (format stream "Invariant violation after class creation:~% ~A."
