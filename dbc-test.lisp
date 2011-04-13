@@ -5,12 +5,16 @@
 ;; (in-package "USER")
 
 (defpackage "DBC-TEST"
-  (:use "DBC" "CL")
+  (:use "DBC" "CL" "FIVEAM")
   (:shadowing-import-from "DBC"
                           "DEFCLASS" "MAKE-INSTANCE" "DBC")
   (:export "TEST-DBC"))
 
 (in-package "DBC-TEST")
+
+(def-suite tests)
+
+(in-suite tests)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 (defgeneric test-dbc (arg1 arg2) (:method-combination
@@ -66,12 +70,12 @@
   (print " >> after (integer integer)")
   (list (+ m 1) (+ n 1)))
 
-#| Example:
-(dbc-test:test-dbc 1 2)
+(test should-succeed-with-integers
+  (is (equal (list 1 2) (dbc-test:test-dbc 1 2))))
 
-;;; Fail:
-(dbc-test:test-dbc 1 12345678900987654321)
-|#
+(test should-fail-n-<-100-precondition
+  (signals dbc::precondition-error
+    (dbc-test:test-dbc 1 12345678900987654321)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 (defclass foo () 
@@ -139,14 +143,14 @@
 |#
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-(defclass test () 
+(defclass test-1 () 
   ((my-slot :accessor my-slot :initarg :my-slot :initform 0))
   (:invariant
    "Invariant of test"
    (lambda (class)
      (numberp (slot-value class 'my-slot)))))
 
-(defclass test-2 (test)
+(defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
 		 :initform nil))
   (:invariant
@@ -156,79 +160,94 @@
 	4))))
 );
 
-(defmethod test-dbc :around ((m test) (n test))
+(defmethod test-dbc :around ((m test-1) (n test-1))
   (print " >> test-dbc (around)")
   (call-next-method))
 
-(defmethod test-dbc ((m test) (n test))
+(defmethod test-dbc ((m test-1) (n test-1))
   (print " >> test-dbc (test test)")
   (list m n))
 
-(defmethod test-dbc :before ((m test) (n test))
+(defmethod test-dbc :before ((m test-1) (n test-1))
   (print " >> before (test test)")
   (list m n 'before))
 
-(defmethod test-dbc :after ((m test) (n test))
+(defmethod test-dbc :after ((m test-1) (n test-1))
   (print " >> after (test test)")
   (list m n 'after))
 
 ;; Preconditions:
 
-(defmethod test-dbc :precondition ((m test-2) (n test))
+(defmethod test-dbc :precondition ((m test-2) (n test-1))
   (print " >> precondition (test-2 test)")
   (< (my-slot m) 123))
 
-(defmethod test-dbc :precondition ((m test) (n test-2))
+(defmethod test-dbc :precondition ((m test-1) (n test-2))
   (print " >> precondition (test test-2)")
   (null (another-slot n)))
 
-(defmethod test-dbc :precondition ((m test) (n test))
+(defmethod test-dbc :precondition ((m test-1) (n test-1))
   (print " >> precondition (test test)")
   (not (zerop (my-slot m))))
 
 ;; Postconditions:
 
 (defmethod test-dbc :postcondition
-      ((m test) (n test-2))
+      ((m test-1) (n test-2))
   (print " >> postcondition (test test-2)")
   (null (another-slot n)))
 
-(defmethod test-dbc :postcondition ((m test) (n test))
+(defmethod test-dbc :postcondition ((m test-1) (n test-1))
   (print " >> postcondition (test test)")
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
-(defmethod fail-invariant ((m test))
+(defmethod fail-invariant ((m test-1))
   (setf (my-slot m) nil))
 
-#| Examples:
+(test should-succeed-with-test-objects
+  (let ((first (make-instance 'test-1 :my-slot 1))
+        (second (make-instance 'test-1)))
+    (is (equal (list first second)
+               (dbc-test:test-dbc first second)))))
 
-(dbc-test:test-dbc (make-instance 'test :my-slot 1) (make-instance 'test))
+(test should-fail-not-zerop-my-slot-precondition
+  (let ((first (make-instance 'test-1))
+        (second (make-instance 'test-1)))
+    (signals dbc::precondition-error
+      (dbc-test:test-dbc first second))))
 
-;;; Fail (precondition violation)
-;;;
-(dbc-test:test-dbc (make-instance 'test) (make-instance 'test))
+(test should-pass-with-weakened-precondition
+  (let ((first (make-instance 'test-2))
+        (second (make-instance 'test-1)))
+    ;; This succeeds because the method TEST-DBC has a weakened precondition for
+    ;; first arguments of type TEST-2.
+    (is (equal (list first second)
+               (dbc-test:test-dbc first second)))))
 
-;;; The next call succeeds because the method TEST-DBC has a weakened
-;;; precondition for first arguments of type TEST-2.
-;;;
-(test-dbc (make-instance 'test-2) (make-instance 'test))
+(test should-fail-zerop-my-slot-postcondition
+  (let ((first (make-instance 'test-1 :my-slot 1))
+        (second (make-instance 'test-1 :my-slot 1)))
+    (signals dbc::postcondition-error
+      (dbc-test:test-dbc first second))))
 
-;;; Fail (postcondition violation)
-;;;
-(test-dbc (make-instance 'test :my-slot 1)
-	  (make-instance 'test :my-slot 1))
+(test should-fail-with-weakened-postcondition
+  (let ((first (make-instance 'test-1 :my-slot 1))
+        (second (make-instance 'test-2 :my-slot 1)))
+    ;; The weakened postcondition for second argument of class TEST-2 does not
+    ;; cause the method to succeed.
+    (signals dbc::postcondition-error
+      (dbc-test:test-dbc first second))))
 
-;;; The weakened postcondition for second argument of class TEST-2
-;;; does not cause the method to succeed.
-;;;
-(test-dbc (make-instance 'test :my-slot 1)
-	  (make-instance 'test-2 :my-slot 1))
+(test should-create-successfully
+  (is (typep (make-instance 'test-1 :my-slot -1)
+             'test-1)))
 
-(make-instance 'test :my-slot -1)
-(make-instance 'test :my-slot nil)
+(test should-fail-invariant-at-creation
+  (signals dbc::creation-invariant-error
+    (make-instance 'test-1 :my-slot nil)))
 
-(fail-invariant (make-instance 'test))
-
-|#
+(test should-fail-invariant-after-method-call
+  (signals dbc::after-invariant-error
+    (fail-invariant (make-instance 'test-1))))
 
 ;;; End of file dbc-test.lisp
