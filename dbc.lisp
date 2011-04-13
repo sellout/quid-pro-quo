@@ -142,7 +142,11 @@
   (:use "COMMON-LISP")
   (:nicknames "DBC")
   (:shadow cl:defclass cl:make-instance)
-  (:export "DBC" "DEFCLASS" "MAKE-INSTANCE"))
+  (:export "DBC" "DEFCLASS" "MAKE-INSTANCE"
+           "CONTRACT-VIOLATION-ERROR"
+           "PRECONDITION-ERROR" "POSTCONDITION-ERROR"
+           "BEFORE-INVARIANT-ERROR" "AFTER-INVARIANT-ERROR"
+           "CREATION-INVARIANT-ERROR"))
 
 (in-package "DBC")
 

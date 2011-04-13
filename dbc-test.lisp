@@ -74,7 +74,7 @@
   (is (equal (list 1 2) (dbc-test:test-dbc 1 2))))
 
 (test should-fail-n-<-100-precondition
-  (signals dbc::precondition-error
+  (signals precondition-error
     (dbc-test:test-dbc 1 12345678900987654321)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -213,7 +213,7 @@
 (test should-fail-not-zerop-my-slot-precondition
   (let ((first (make-instance 'test-1))
         (second (make-instance 'test-1)))
-    (signals dbc::precondition-error
+    (signals precondition-error
       (dbc-test:test-dbc first second))))
 
 (test should-pass-with-weakened-precondition
@@ -227,7 +227,7 @@
 (test should-fail-zerop-my-slot-postcondition
   (let ((first (make-instance 'test-1 :my-slot 1))
         (second (make-instance 'test-1 :my-slot 1)))
-    (signals dbc::postcondition-error
+    (signals postcondition-error
       (dbc-test:test-dbc first second))))
 
 (test should-fail-with-weakened-postcondition
@@ -235,7 +235,7 @@
         (second (make-instance 'test-2 :my-slot 1)))
     ;; The weakened postcondition for second argument of class TEST-2 does not
     ;; cause the method to succeed.
-    (signals dbc::postcondition-error
+    (signals postcondition-error
       (dbc-test:test-dbc first second))))
 
 (test should-create-successfully
@@ -243,11 +243,11 @@
              'test-1)))
 
 (test should-fail-invariant-at-creation
-  (signals dbc::creation-invariant-error
+  (signals creation-invariant-error
     (make-instance 'test-1 :my-slot nil)))
 
 (test should-fail-invariant-after-method-call
-  (signals dbc::after-invariant-error
+  (signals after-invariant-error
     (fail-invariant (make-instance 'test-1))))
 
 ;;; End of file dbc-test.lisp
