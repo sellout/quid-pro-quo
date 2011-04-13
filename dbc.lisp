@@ -118,37 +118,46 @@
                      (description condition)))))
 
 (define-condition precondition-error (contract-violation-error)
-  ()
+  ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-             (format stream "Precondition violation~@[: ~A~]."
+             (format stream "Precondition violation on ~A~@[: ~A~]."
+                     (method condition)
                      (description condition)))))
 
 (define-condition postcondition-error (contract-violation-error)
-  ()
+  ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-             (format stream "Postcondition violation~@[: ~A~]."
+             (format stream "Postcondition violation on ~A~@[: ~A~]."
+                     (method condition)
                      (description condition)))))
 
 (define-condition invariant-error (contract-violation-error)
-  ())
+  ((object :initform nil :reader object :initarg :object)))
 
 (define-condition before-invariant-error (invariant-error)
-  ()
+  ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-	     (format stream "Invariant violation before method call~@[:~% ~A~]."
+	     (format stream
+                     "Invariant violation ~@[on ~A ~]before ~A~@[:~% ~A~]."
+                     (object condition)
+                     (method condition)
 		     (description condition)))))
 
 (define-condition after-invariant-error (invariant-error)
-  ()
+  ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-	     (format stream "Invariant violation after method call~@[:~% ~A~]."
+	     (format stream
+                     "Invariant violation ~@[on ~A ~]after ~A~@[:~% ~A~]."
+                     (object condition)
+                     (method condition)
 		     (description condition)))))
 
 (define-condition creation-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
 	     (format stream
-                     "Invariant violation after class creation~@[:~% ~A~]."
+                     "Invariant violation after creation of ~A~@[:~% ~A~]."
+                     (object condition)
 		     (description condition)))))
 
 
@@ -173,14 +182,15 @@
 			 `(call-method ,(car method-list)
 				       ,(cdr method-list)))
 		    methods))
-	   (raise-error (error-type methods)
+	   (raise-error (error-type methods &rest condition-parameters)
 	     (maplist #'(lambda (method-list)
 			 `(unless (call-method ,(car method-list)
 					       ,(cdr method-list))
 			    (error ',error-type
 				   :description
 				   ,(second (method-qualifiers
-					     (car method-list))))))
+                                             (car method-list)))
+                                   ,@condition-parameters)))
 		     methods)))
     (let* ((form (if (or before after (rest primary))
 		     `(multiple-value-prog1
@@ -203,7 +213,8 @@
 			      ,around-form
 			    (progn
 			      ,@(raise-error 'precondition-error
-					     precondition)))
+					     precondition
+                                             :method (first primary))))
 		       around-form))
 	   #-:dbc-precondition-checks
 	   (pre-form around-form)
@@ -216,7 +227,8 @@
 			   ,pre-form
 			   (unless (and ,@(call-methods postcondition))
 			     ,@(raise-error 'postcondition-error
-					    postcondition)))
+					    postcondition
+                                            :method (first primary))))
 			pre-form))
 	   #-:dbc-postcondition-checks
 	   (post-form pre-form)
@@ -227,16 +239,15 @@
 			 invariant
 			 `(multiple-value-prog1
 			   (progn
-			     (unless (and ,@(call-methods
-					     invariant))
-			       ,@(raise-error
-				  'before-invariant-error
-				  invariant))
+			     (unless (and ,@(call-methods invariant))
+			       ,@(raise-error 'before-invariant-error
+                                              invariant
+                                              :method (first primary)))
 			     ,post-form)
 			   (unless (and ,@(call-methods invariant))
-			     ,@(raise-error
-				'after-invariant-error
-				invariant)))
+			     ,@(raise-error 'after-invariant-error
+                                            invariant
+                                            :method (first primary))))
 		       post-form))
 	   #-:dbc-invariant-checks
 	   (inv-form post-form))
@@ -342,7 +353,7 @@ directly be defined by the user."))
 (defmethod make-instance (class-name &rest initargs)
   (let ((object (apply #'cl:make-instance class-name initargs)))
     (unless (check-invariant object)
-      (error 'creation-invariant-error))
+      (error 'creation-invariant-error :object object))
     object))
 
 ;;; End of file dbc.lisp
