@@ -284,4 +284,26 @@
   (is (typep (make-instance 'inv-class) 'inv-class)))
 |#
 
+;;; This next section uses a bunch of features without much rigor, just to make
+;;; sure everything seems to work.
+
+(defclass feature-test ()
+  ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
+  (:invariant (lambda (class) 
+                (format t "~& >> Invariant check for class ~A~%" class)
+                (numberp (slot-value class 'slot1)))))
+
+(defgeneric test-dbc-/ (arg1 arg2)
+  (:method-combination dbc :invariant-check nil)
+  (:method :precondition "first arg zero" ((m feature-test) (n feature-test))
+    (format t "~& >> precondition (test test)~%")
+    (not (zerop (slot1 m))))
+  (:method ((m feature-test) (n feature-test))
+    (/ (slot1 n) (slot1 m))))
+
+(test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))
+(test-dbc-/ (make-instance 'feature-test :slot1 2)
+            (make-instance 'feature-test :slot1 8))
+
+
 ;;; End of file dbc-test.lisp

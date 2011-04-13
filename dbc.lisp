@@ -1,34 +1,5 @@
 ;;; dbc.lisp
 
-;;; Example:
-;;; =======
-;;;
-;;; (defpackage "DBC-TEST"
-;;;   (:use "DBC" "CL")
-;;;   (:shadowing-import-from "DBC"
-;;;                          "DEFCLASS" "MAKE-INSTANCE" "DBC"))
-;;;
-;;; (in-package "DBC-TEST")
-;;;
-;;; (defclass test () 
-;;;   ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
-;;;   (:invariant (lambda (class) 
-;;;	 	(format t "~& >> Invariant check for class ~A~%"
-;;;		 	class)
-;;;		( numberp (slot-value class 'slot1)))))
-;;;
-;;; (defgeneric test-dbc (arg1 arg2) (:method-combination
-;;;                                   dbc
-;;;				      :invariant-check nil))
-;;; (defmethod test-dbc :precondition "first arg zero" ((m test) (n test))
-;;;   (format t "~& >> precondition (test test)~%")
-;;;   (not (zerop (slot1 m))))
-;;; (defmethod test-dbc ((m test) (n test))
-;;;   (/ (slot1 n) (slot1 m)))
-;;;
-;;; (test-dbc (make-instance 'test) (make-instance 'test))
-;;; (test-dbc (make-instance 'test :slot1 2) (make-instance 'test :slot1 8))
-
 (defpackage design-by-contract
   (:use #:cl)
   (:nicknames #:dbc)
