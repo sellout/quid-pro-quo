@@ -160,6 +160,10 @@
 	4))))
 );
 
+(test should-fail-on-invariant-of-superclass
+  (signals after-invariant-error
+    (setf (my-slot (make-instance 'test-2)) nil)))
+
 (defmethod test-dbc :around ((m test-1) (n test-1))
   (print " >> test-dbc (around)")
   (call-next-method))
