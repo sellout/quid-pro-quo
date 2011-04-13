@@ -250,4 +250,35 @@
   (signals after-invariant-error
     (fail-invariant (make-instance 'test-1))))
 
+(test should-fail-invariant-after-setting-slot-value
+  (signals after-invariant-error
+    (setf (slot-value (make-instance 'test-1) 'my-slot) nil)))
+
+(cl:defclass non-dbc-superclass ()
+  ((foo :initform 10 :initarg :foo :accessor foo)))
+
+(defclass dbc-subclass (non-dbc-superclass)
+  ()
+  (:invariant (lambda (instance)
+                (> (slot-value instance 'foo) 5))))
+
+(test should-fail-invariant-on-subclass-creation
+  (signals creation-invariant-error
+    (make-instance 'dbc-subclass :foo 5)))
+
+(test should-fail-invariant-on-superclass-writer
+  (let ((instance (make-instance 'dbc-subclass)))
+    (signals after-invariant-error
+      (setf (foo instance) 5))))
+
+#| FIXME: currently this results in a stack overflow
+(defclass inv-class ()
+  ((foo :initform 10 :initarg :foo :accessor foo))
+  (:invariant (lambda (instance)
+                (> (foo instance) 5))))
+
+(test should-not-recurse-on-reader-in-invariant
+  (is (typep (make-instance 'inv-class) 'inv-class)))
+|#
+
 ;;; End of file dbc-test.lisp
