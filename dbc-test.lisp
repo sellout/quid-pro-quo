@@ -9,11 +9,8 @@
 
 (in-suite tests)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-(defgeneric test-dbc (arg1 arg2) (:method-combination
-				  dbc
-				  :invariant-check nil))
-) ;; eval-when
+(defgeneric test-dbc (arg1 arg2)
+  (:method-combination dbc :invariant-check nil))
 
 (defmethod test-dbc ((m integer) (n integer))
   (print " >> test-dbc (integer integer)")
@@ -70,14 +67,13 @@
   (signals precondition-error
     (dbc-test:test-dbc 1 12345678900987654321)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
    (your-slot :accessor your-slot :initform t))
   (:invariant (lambda (class) 
-		(format t "~& >> Invariant check for class ~A~%"
-			class)
-		t)))
+                (format t "~& >> Invariant check for class ~A~%"
+                        class)
+                t)))
 
 (defclass bar (foo) 
   ((yet-another-slot :accessor yet-another-slot :initform 'yas))
@@ -86,7 +82,6 @@
      (declare (ignore class))
      (format t " ++ Additional invariant (bar)~%")
      t)))
-) ;; eval-when
 
 (defmethod my-slot :precondition ((bar bar))
   (format t " ++ Additional precondition (my-slot bar)~%")
@@ -96,14 +91,12 @@
   (format t " ++ Additional postcondition (my-slot bar)~%")
   t)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
 (defclass bar-2 (foo)
   ()
   (:invariant (lambda (class)
-		(declare (ignorable class))
-		(format t "~& >> Strengthened invariant.~%")
-		t)))
-) ;; eval-when
+                (declare (ignorable class))
+                (format t "~& >> Strengthened invariant.~%")
+                t)))
 
 #| Example:
 
@@ -135,7 +128,6 @@
 
 |#
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
 (defclass test-1 () 
   ((my-slot :accessor my-slot :initarg :my-slot :initform 0))
   (:invariant
@@ -151,7 +143,7 @@
    (lambda (class)
      (< (length (slot-value class 'another-slot))
 	4))))
-);
+;
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
@@ -295,6 +287,11 @@
   (:method ((m feature-test) (n feature-test))
     (/ (slot1 n) (slot1 m))))
 
-(test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))
-(test-dbc-/ (make-instance 'feature-test :slot1 2)
-            (make-instance 'feature-test :slot1 8))
+(test should-fail-not-zerop-precondition
+  (signals precondition-error
+    (test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))))
+
+(test should-succeed-and-divide
+  (is (= 4
+         (test-dbc-/ (make-instance 'feature-test :slot1 2)
+                     (make-instance 'feature-test :slot1 8)))))
