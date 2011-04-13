@@ -96,9 +96,9 @@
 
 ;;; Enable all checks for testing purposes
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (pushnew :dbc-precondition-checks cl:*features*)
-  (pushnew :dbc-postcondition-checks cl:*features*)
-  (pushnew :dbc-invariant-checks cl:*features*))
+  (pushnew :dbc-precondition-checks *features*)
+  (pushnew :dbc-postcondition-checks *features*)
+  (pushnew :dbc-invariant-checks *features*))
 
 ;;; Conditions.
 ;;; ==========
