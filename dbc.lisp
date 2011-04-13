@@ -166,10 +166,7 @@
 ;;; ==========================
 
 (define-method-combination dbc
-  #-:pcl
   (&key (precondition-check t) (postcondition-check t) (invariant-check t))
-  #+:pcl
-  ()
   ((precondition (:precondition . *))
    (around (:around))
    (invariant (:invariant . *))
@@ -205,10 +202,7 @@
 				       (make-method ,form)))
 		    form))
 	   #+:dbc-precondition-checks
-	   (pre-form (if #-:pcl
-			 (and precondition-check precondition)
-		         #+:pcl
-			 precondition
+	   (pre-form (if (and precondition-check precondition)
 			 `(if (or ,@(call-methods precondition))
 			      ,around-form
 			    (progn
@@ -219,10 +213,7 @@
 	   #-:dbc-precondition-checks
 	   (pre-form around-form)
 	   #+:dbc-postcondition-checks
-	   (post-form (if #-:pcl
-			  (and postcondition-check postcondition)
-			  #+:pcl
-			  postcondition
+	   (post-form (if (and postcondition-check postcondition)
 			 `(multiple-value-prog1
 			   ,pre-form
 			   (unless (and ,@(call-methods postcondition))
@@ -233,11 +224,8 @@
 	   #-:dbc-postcondition-checks
 	   (post-form pre-form)
 	   #+:dbc-invariant-checks
-	   (inv-form (if #-:pcl
-			 (and invariant-check invariant)
-		         #+:pcl
-			 invariant
-			 `(multiple-value-prog1
+	   (inv-form (if (and invariant-check invariant)
+		         `(multiple-value-prog1
 			   (progn
 			     (unless (and ,@(call-methods invariant))
 			       ,@(raise-error 'before-invariant-error
