@@ -9,3 +9,21 @@ The principal idea of Design by Contract (DBC) is that a class and its clients h
 ## Support for Design by Contract in Programming Languages
 
 The language that offers the best support for DBC is [Eiffel](http://www.eiffel.com), designed by Bertrand Meyer. It is rather difficult to add support for DBC to most other languages, but not so for Common Lisp: I [Matthias Hölzl] have written a package for Common Lisp that provides support for DBC. It is still very new and not too well tested so you should expect some rough edges and changes in its future design. There is no larger program depending on this package available, only some silly test cases. Since I intend to use the dbc package for my own programs this should change in the not so distant future.
+
+## Design by Contract in Common Lisp.
+
+One of the outstanding features of the Eiffel language is that it supports a concept called Design by Contract. A comprehensive description is given in the following books
+
+> Object Oriented Software Construction, 2nd ed.
+> Bertrand Meyer
+> Prentice Hall PTR, 1997
+> ISBN 0-13-629155-4
+
+> Eiffel: The Language, 2nd ed.
+> Bertrand Meyer
+> Prentice Hall PTR, 1992
+> ISBN ???
+
+but the key point of DBC is that the relationship between a class and its clients is specified by a contract: There are certain conditions that the caller of a method specialized on a class has to fulfill so that the method can do its job (the preconditions) and the method guarantees certain things after its completion (the postconditions). Furthermore a class may have certain properties that are always true about that class; these properties are called invariants.
+
+This file contains an implementation of DBC for CLOS. Pre- and postconditions as well as invariants are specified by qualified methods of type dbc; the usual before, after and around method combinations are available for these methods as well.

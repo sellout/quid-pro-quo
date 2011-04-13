@@ -1,36 +1,5 @@
 ;;; dbc.lisp
 
-;;; Design by Contract in Common Lisp.
-;;; =================================
-
-;;; One of the outstanding features of the Eiffel language is that it
-;;; supports a concept called Design by Contract.  A comprehensive
-;;; description is given in the following books
-;;;
-;;; Object Oriented Software Construction, 2nd ed.
-;;; Bertrand Meyer
-;;; Prentice Hall PTR, 1997
-;;; ISBN 0-13-629155-4
-;;;
-;;; Eiffel: The Language, 2nd ed.
-;;; Bertrand Meyer
-;;; Prentice Hall PTR, 1992
-;;; ISBN ???
-;;;
-;;; but the key point of DBC is that the relationship between a class
-;;; and its clients is specified by a contract: There are certain
-;;; conditions that the caller of a method specialized on a class has
-;;; to fulfill so that the method can do its job (the preconditions)
-;;; and the method guarantees certain things after its completion (the
-;;; postconditions).  Furthermore a class may have certain properties
-;;; that are always true about that class; these properties are called
-;;; invariants.
-;;;
-;;; This file contains an implementation of DBC for CLOS.  Pre- and
-;;; postconditions as well as invariants are specified by qualified
-;;; methods of type dbc; the usual before, after and around method
-;;; combinations are available for these methods as well.
-;;;
 ;;; Example:
 ;;; =======
 ;;;
