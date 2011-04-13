@@ -95,13 +95,10 @@
 (in-package #:dbc)
 
 ;;; Enable all checks for testing purposes
-;;;
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (pushnew :dbc-precondition-checks cl:*features*)
   (pushnew :dbc-postcondition-checks cl:*features*)
-  (pushnew :dbc-invariant-checks cl:*features*)
-) ;; eval-when
-
+  (pushnew :dbc-invariant-checks cl:*features*))
 
 ;;; Conditions.
 ;;; ==========
@@ -160,8 +157,6 @@
                      (object condition)
 		     (description condition)))))
 
-
-
 ;;; The method combination DBC.
 ;;; ==========================
 
@@ -175,71 +170,68 @@
    (after (:after))
    (postcondition (:postcondition . *)))
   (labels ((call-methods (methods)
-            (maplist #'(lambda (method-list)
-			 `(call-method ,(car method-list)
-				       ,(cdr method-list)))
-		    methods))
+             (maplist (lambda (method-list)
+                        `(call-method ,(car method-list) ,(cdr method-list)))
+                      methods))
 	   (raise-error (error-type methods &rest condition-parameters)
-	     (maplist #'(lambda (method-list)
-			 `(unless (call-method ,(car method-list)
-					       ,(cdr method-list))
-			    (error ',error-type
-				   :description
-				   ,(second (method-qualifiers
-                                             (car method-list)))
-                                   ,@condition-parameters)))
-		     methods)))
+	     (maplist (lambda (method-list)
+                        `(unless (call-method ,(car method-list)
+                                              ,(cdr method-list))
+                           (error ',error-type
+                                  :description
+                                  ,(second (method-qualifiers
+                                            (car method-list)))
+                                  ,@condition-parameters)))
+                      methods)))
     (let* ((form (if (or before after (rest primary))
 		     `(multiple-value-prog1
-		       (progn ,@(call-methods before)
-			      (call-method ,(first primary)
-					   ,(rest primary)))
-		       ,@(call-methods (reverse after)))
-		   `(call-method ,(first primary) ,(rest primary))))
+                          (progn ,@(call-methods before)
+                                 (call-method ,(first primary) ,(rest primary)))
+                        ,@(call-methods (reverse after)))
+                     `(call-method ,(first primary) ,(rest primary))))
 	   (around-form (if around
-		      `(call-method ,(first around)
-				    (,@(rest around)
-				       (make-method ,form)))
-		    form))
+                            `(call-method ,(first around)
+                                          (,@(rest around) (make-method ,form)))
+                            form))
 	   #+:dbc-precondition-checks
 	   (pre-form (if (and precondition-check precondition)
 			 `(if (or ,@(call-methods precondition))
 			      ,around-form
-			    (progn
-			      ,@(raise-error 'precondition-error
-					     precondition
-                                             :method (first primary))))
-		       around-form))
+                              (progn
+                                ,@(raise-error 'precondition-error
+                                               precondition
+                                               :method (first primary))))
+                         around-form))
 	   #-:dbc-precondition-checks
 	   (pre-form around-form)
 	   #+:dbc-postcondition-checks
 	   (post-form (if (and postcondition-check postcondition)
-			 `(multiple-value-prog1
-			   ,pre-form
-			   (unless (and ,@(call-methods postcondition))
-			     ,@(raise-error 'postcondition-error
-					    postcondition
-                                            :method (first primary))))
-			pre-form))
+                          `(multiple-value-prog1
+                               ,pre-form
+                             (unless (and ,@(call-methods postcondition))
+                               ,@(raise-error 'postcondition-error
+                                              postcondition
+                                              :method (first primary))))
+                          pre-form))
 	   #-:dbc-postcondition-checks
 	   (post-form pre-form)
 	   #+:dbc-invariant-checks
 	   (inv-form (if (and invariant-check invariant)
 		         `(multiple-value-prog1
-			   (progn
-			     (unless (and ,@(call-methods invariant))
-			       ,@(raise-error 'before-invariant-error
-                                              invariant
-                                              :method (first primary)))
-			     ,post-form)
-			   (unless (and ,@(call-methods invariant))
-			     ,@(raise-error 'after-invariant-error
-                                            invariant
-                                            :method (first primary))))
-		       post-form))
+                              (progn
+                                (unless (and ,@(call-methods invariant))
+                                  ,@(raise-error 'before-invariant-error
+                                                 invariant
+                                                 :method (first primary)))
+                                ,post-form)
+                            (unless (and ,@(call-methods invariant))
+                              ,@(raise-error 'after-invariant-error
+                                             invariant
+                                             :method (first primary))))
+                         post-form))
 	   #-:dbc-invariant-checks
 	   (inv-form post-form))
-	   inv-form)))
+      inv-form)))
 
 (defun getf-and-remove (name list &optional acc)
   "Find NAME in the alist LIST.  Returns nil as first value if NAME is
@@ -247,39 +239,33 @@ not found, the valus associated with NAME otherwise.  The second value
 returned is LIST with the first occurence of pair (NAME value)
 removed."
   (if (null list)
-    (values nil (reverse acc))
-    (if (eql (caar list) name)
-      (values (cdar list) (append (reverse acc) (rest list)))
-      (getf-and-remove name (rest list) (cons (first list) acc)))))
+      (values nil (reverse acc))
+      (if (eql (caar list) name)
+          (values (cdar list) (append (reverse acc) (rest list)))
+          (getf-and-remove name (rest list) (cons (first list) acc)))))
 
 (defun define-slot-generics (slot)
   "Returns a list with the reader and writer generic functions for a slot.
 The generic functions have method combination type `dbc'."
   (let ((accessor (getf (rest slot) :accessor)))
-    (let ((reader (or (getf (rest slot) :reader)
-                      accessor))
+    (let ((reader (or (getf (rest slot) :reader) accessor))
           (writer (or (getf (rest slot) :writer)
                       (when accessor
                         `(setf ,accessor)))))
       (list (when reader
-              `(ensure-generic-function
-                ',reader
-                :lambda-list '(object)
-                :method-combination #-mcl '(dbc:dbc)
-                #+mcl (ccl::%find-method-combination nil 'dbc nil)))
+              `(ensure-generic-function ',reader
+                                        :lambda-list '(object)
+                                        :method-combination '(dbc:dbc)))
             (when writer
-              `(ensure-generic-function
-                ',writer
-                :lambda-list '(new-value object)
-                :method-combination #-mcl'(dbc:dbc)
-                #+mcl (ccl::%find-method-combination nil 'dbc nil)))))))
+              `(ensure-generic-function ',writer
+                                        :lambda-list '(new-value object)
+                                        :method-combination '(dbc:dbc)))))))
 
 (defun define-slot-accessor-invariants (class-name slot)
   "Returns a list with method definitions for reader and writer
 invariants."
   (let ((accessor (getf (rest slot) :accessor)))
-    (let ((reader (or (getf (rest slot) :reader)
-                      accessor))
+    (let ((reader (or (getf (rest slot) :reader) accessor))
           (writer (or (getf (rest slot) :writer)
                       (when accessor
                         `(setf ,accessor)))))
@@ -287,11 +273,9 @@ invariants."
               `(defmethod ,reader :invariant ((object ,class-name))
                  (check-invariant object)))
             (when writer
-              `(defmethod ,writer :invariant
-		     (value (object ,class-name))
+              `(defmethod ,writer :invariant (value (object ,class-name))
                  (declare (ignore value))
                  (check-invariant object)))))))
-
 
 (defun define-check-invariant-method (invariant class-name)
   "Returns a list containing the method on CHECK-INVARIANT specialized
@@ -301,37 +285,34 @@ for CLASS-NAME and executing INVARIANT."
 	(call-next-method)))))
 
 (defmacro defclass (&body body)
-  (destructuring-bind (name supers &optional slots &rest options)
-                      body
+  (destructuring-bind (name supers &optional slots &rest options) body
     (multiple-value-bind (invariant-form new-options)
-                         (getf-and-remove :invariant options)
+        (getf-and-remove :invariant options)
       (let ((documented-invariant (cadr invariant-form)))
 	(let ((invariant (or documented-invariant (car invariant-form))))
 	  `(progn
 	     ,@(if slots
 		   (apply #'append
-			  (mapcar (lambda (slot)
-				    (define-slot-generics slot))
+			  (mapcar (lambda (slot) (define-slot-generics slot))
 				  slots))
-		 '())
-	     (cl:defclass ,name ,supers ,slots
-			  ,@new-options)
+                   '())
+	     (cl:defclass ,name ,supers
+               ,slots
+               ,@new-options)
 	     ,@(when invariant
-		 (define-check-invariant-method invariant name))
+                 (define-check-invariant-method invariant name))
 	     ,@(when slots
-		 (apply #'append
-			(mapcar (lambda (slot)
-				  (define-slot-accessor-invariants
-				    name slot))
+                 (apply #'append
+                        (mapcar (lambda (slot)
+				  (define-slot-accessor-invariants name slot))
 				slots)))))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-(defgeneric check-invariant (object)
-  (:documentation
-   "Methods on the generic `check-invariant' are used by the dbc
+  (defgeneric check-invariant (object)
+    (:documentation
+     "Methods on the generic `check-invariant' are used by the dbc
 method combination to perform the invariant check and should not
-directly be defined by the user."))
-) ; eval-when
+directly be defined by the user.")))
 
 (defmethod check-invariant (object)
   "Default invariant, always true."
