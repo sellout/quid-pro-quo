@@ -114,26 +114,20 @@
 		:initarg :description
 		:initform "(no description available)"))
   (:report (lambda (condition stream)
-	     (if (description condition)
-		 (format stream "Contract violation: ~A."
-			 (description condition))
-	       (format stream "Contract violation.")))))
+             (format stream "Contract violation~@[: ~A~]."
+                     (description condition)))))
 
 (define-condition precondition-error (contract-violation-error)
   ()
   (:report (lambda (condition stream)
-	     (if (description condition)
-		 (format stream "Precondition violation: ~A."
-			 (description condition))
-	       (format stream "Precondition violation.")))))
+             (format stream "Precondition violation~@[: ~A~]."
+                     (description condition)))))
 
 (define-condition postcondition-error (contract-violation-error)
   ()
   (:report (lambda (condition stream)
-	     (if (description condition)
-		 (format stream "Postcondition violation: ~A."
-			 (description condition))
-	       (format stream "Postcondition violation.")))))
+             (format stream "Postcondition violation~@[: ~A~]."
+                     (description condition)))))
 
 (define-condition invariant-error (contract-violation-error)
   ())
@@ -141,21 +135,22 @@
 (define-condition before-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream "Invariant violation before method call:~% ~A."
+	     (format stream "Invariant violation before method call~@[:~% ~A~]."
 		     (description condition)))))
 
 (define-condition after-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream "Invariant violation after method call:~% ~A."
+	     (format stream "Invariant violation after method call~@[:~% ~A~]."
 		     (description condition)))))
 
 (define-condition creation-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream "Invariant violation after class creation:~% ~A."
+	     (format stream
+                     "Invariant violation after class creation~@[:~% ~A~]."
 		     (description condition)))))
-	     
+
 
 
 ;;; The method combination DBC.
