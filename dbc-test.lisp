@@ -239,6 +239,7 @@
   (signals after-invariant-error
     (fail-invariant (make-instance 'test-1))))
 
+;; FIXME: this is an expected failure
 (test should-fail-invariant-after-setting-slot-value
   (signals after-invariant-error
     (setf (slot-value (make-instance 'test-1) 'my-slot) nil)))
@@ -255,6 +256,7 @@
   (signals creation-invariant-error
     (make-instance 'dbc-subclass :foo 5)))
 
+;; FIXME: this is an expected failure
 (test should-fail-invariant-on-superclass-writer
   (let ((instance (make-instance 'dbc-subclass)))
     (signals after-invariant-error
