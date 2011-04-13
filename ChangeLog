@@ -1,0 +1,55 @@
+2011-04-12  Greg Pfeil  <greg@technomadic.org>
+ * Moved project to github. All new changes can be seen in the revision history.
+
+1999-08-03  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Removed the possibility to add a contract-specification-string
+   to pre- and postconditions for acl5 compatibility.
+ * Improved the output for pre- and postconditions without
+   descriptions.
+
+1998-10-14  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Fixed the qualifiers to use dotted lists as required by the
+   standard (thanks to Douglas Thomas Crosher for setting me
+   straight on this).
+ * Disabled the keyword arguments for PCL based implementations
+   so that the code compiles on them.
+
+1998-10-13  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Contract checks can now be disabled for each generic function
+   with the keyword arguments :precondition-check,
+   :postcondition-check and :invariant-check to the
+   :method-combination argument.  Unfortunately this breaks on
+   PCL-based implementations.
+
+1998-10-12  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Defined error classes so that contract violations can be
+   recognized and caught.
+ * Changed method combination type to allow descriptions
+   of the contract which are stored in the condition that
+   is signalled when the contract is violated.
+ * Changed defclass to allow :invariant functions to be
+   preceeded by a descriptive string.
+ * Features :dbc-precondition-checks, :dbc-postcondition-checks
+   and :dbc-invariant-checks must be present for the checks to
+   be enabled at compile time.
+ * `define-slot-accessor-invariants' takes additional
+   description argument.
+ * `getf-and-remove' now returns the cdar of the found pair as
+   first argument and not the cadar.
+
+1998-10-11  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Added default method for `check-invariant'.
+ * Removed `(ensure-generic-function 'check-invariant)' from
+   `define-check-invariant-method'.
+ * Changed method combination type of `check-invariant' to
+   standard method combination.
+
+1998-10-11  Rainer Joswig
+ * Added package definition.
+ * Added MCL patches.
+
+1998-10-07  Matthias Hoelzl  <tc@gauss.muc.de>
+ * Initial version.
+ * Changed handling of pre-/postconditions and invariants to
+   match Eiffel's behavior more closely.  Errors are now signalled
+   by the method combination.
