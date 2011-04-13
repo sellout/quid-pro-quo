@@ -60,28 +60,6 @@
 ;;; (test-dbc (make-instance 'test) (make-instance 'test))
 ;;; (test-dbc (make-instance 'test :slot1 2) (make-instance 'test :slot1 8))
 
-
-;;; Authors and Copyright.
-;;; =====================
-;;;
-;;; The code was written by Matthias Hoelzl (tc@gauss.muc.de) and is
-;;; placed in the public domain.  Rainer Joswig added the package
-;;; definition and MCL patches.  The most recent version of this file
-;;; should be available at
-;;;
-;;;    <http://www.muc.de/~hoelzl/tools/dbc/dbc.lisp>.
-;;;
-;;; Thanks to Rainer Joswig for pointing out errors and sending me
-;;; notes on the design as well as MCL patches and to Douglas Thomas
-;;; Crosher who found a bug in the definition of the method qualifier
-;;; patterns.
-;;;
-;;; WARNING: This code is still in its very early stages and not
-;;; suitable for production use.
-;;;
-;;; Have fun,
-;;;    Matthias
-
 (defpackage design-by-contract
   (:use #:cl)
   (:nicknames #:dbc)

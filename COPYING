@@ -1,0 +1,12 @@
+The code was written by Matthias Hoelzl (tc@gauss.muc.de) and is placed in the
+public domain. Rainer Joswig added the package definition and MCL patches.
+
+Thanks to Rainer Joswig for pointing out errors and sending me notes on the
+design as well as MCL patches and to Douglas Thomas Crosher who found a bug in
+the definition of the method qualifier patterns.
+
+WARNING: This code is still in its very early stages and not suitable for
+production use.
+
+Have fun,
+   Matthias
