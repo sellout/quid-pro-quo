@@ -10,55 +10,35 @@
 (in-suite tests)
 
 (defgeneric test-dbc (arg1 arg2)
-  (:method-combination dbc :invariant-check nil))
+  (:method-combination dbc :invariant-check nil)
 
-(defmethod test-dbc ((m integer) (n integer))
-  (print " >> test-dbc (integer integer)")
-  (list m n))
+  (:method :invariant ((m fixnum) (n integer))
+    'foo)
+  (:method :invariant ((m integer) (n fixnum))
+    'foo)
+  (:method :invariant ((m integer) (n integer))
+    'foo)
 
-(defmethod test-dbc :around ((m integer) (n integer))
-  (print " >> test-dbc (around)")
-  (call-next-method))
+  (:method :precondition ((m fixnum) (n integer))
+    (> m 123))
+  (:method :precondition ((m integer) (n fixnum))
+    (< n 100))
+  (:method :precondition ((m integer) (n integer))
+    (= m 12345678900987654321))
 
-(defmethod test-dbc :precondition ((m fixnum) (n integer))
-  (print " >> precondition (fixnum integer)")
-  (> m 123))
+  (:method :around ((m integer) (n integer))
+    (call-next-method))
+  (:method :before ((m integer) (n integer))
+    (list (- m 1) (- n 1)))
+  (:method ((m integer) (n integer))
+    (list m n))
+  (:method :after ((m integer) (n integer))
+    (list (+ m 1) (+ n 1)))
 
-(defmethod test-dbc :precondition ((m integer) (n fixnum))
-  (print " >> precondition (integer fixnum)")
-  (< n 100))
-
-(defmethod test-dbc :precondition ((m integer) (n integer))
-  (print " >> precondition (integer integer)")
-  (= m 12345678900987654321))
-
-(defmethod test-dbc :postcondition ((m integer) (n fixnum))
-  (print " >> postcondition (integer fixnum)")
-  999)
-
-(defmethod test-dbc :postcondition  ((m integer) (n integer))
-  (print " >> postcondition (integer integer)")
-  t)
-
-(defmethod test-dbc :invariant  ((m integer) (n integer))
-  (print " >> invariant (integer integer)")
-  'foo)
-
-(defmethod test-dbc :invariant  ((m fixnum) (n integer))
-  (print " >> invariant (fixnum integer)")
-  'foo)
-
-(defmethod test-dbc :invariant  ((m integer) (n fixnum))
-  (print " >> invariant (integer fixnum)")
-  'foo)
-
-(defmethod test-dbc :before ((m integer) (n integer))
-  (print " >> before (integer integer)")
-  (list (- m 1) (- n 1)))
-
-(defmethod test-dbc :after ((m integer) (n integer))
-  (print " >> after (integer integer)")
-  (list (+ m 1) (+ n 1)))
+  (:method :postcondition ((m integer) (n fixnum))
+    999)
+  (:method :postcondition  ((m integer) (n integer))
+    t))
 
 (test should-succeed-with-integers
   (is (equal (list 1 2) (dbc-test:test-dbc 1 2))))
@@ -70,32 +50,26 @@
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
    (your-slot :accessor your-slot :initform t))
-  (:invariant (lambda (class) 
-                (format t "~& >> Invariant check for class ~A~%"
-                        class)
+  (:invariant (lambda (class)
+                (declare (ignore class))
                 t)))
 
 (defclass bar (foo) 
   ((yet-another-slot :accessor yet-another-slot :initform 'yas))
-  (:invariant
-   (lambda (class)
-     (declare (ignore class))
-     (format t " ++ Additional invariant (bar)~%")
-     t)))
+  (:invariant (lambda (class)
+                (declare (ignore class))
+                t)))
 
 (defmethod my-slot :precondition ((bar bar))
-  (format t " ++ Additional precondition (my-slot bar)~%")
   t)
 
 (defmethod my-slot :postcondition ((bar bar))
-  (format t " ++ Additional postcondition (my-slot bar)~%")
   t)
 
 (defclass bar-2 (foo)
   ()
   (:invariant (lambda (class)
                 (declare (ignorable class))
-                (format t "~& >> Strengthened invariant.~%")
                 t)))
 
 #| Example:
@@ -130,64 +104,41 @@
 
 (defclass test-1 () 
   ((my-slot :accessor my-slot :initarg :my-slot :initform 0))
-  (:invariant
-   "Invariant of test"
-   (lambda (class)
-     (numberp (slot-value class 'my-slot)))))
+  (:invariant "Invariant of test"
+              (lambda (class)
+                (numberp (slot-value class 'my-slot)))))
 
 (defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
 		 :initform nil))
-  (:invariant
-   "Test-2 invariant"
-   (lambda (class)
-     (< (length (slot-value class 'another-slot))
-	4))))
-;
+  (:invariant "Test-2 invariant"
+              (lambda (class)
+                (< (length (slot-value class 'another-slot))
+                   4))))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-2)) nil)))
 
-(defmethod test-dbc :around ((m test-1) (n test-1))
-  (print " >> test-dbc (around)")
-  (call-next-method))
-
-(defmethod test-dbc ((m test-1) (n test-1))
-  (print " >> test-dbc (test test)")
-  (list m n))
-
-(defmethod test-dbc :before ((m test-1) (n test-1))
-  (print " >> before (test test)")
-  (list m n 'before))
-
-(defmethod test-dbc :after ((m test-1) (n test-1))
-  (print " >> after (test test)")
-  (list m n 'after))
-
-;; Preconditions:
-
 (defmethod test-dbc :precondition ((m test-2) (n test-1))
-  (print " >> precondition (test-2 test)")
   (< (my-slot m) 123))
-
 (defmethod test-dbc :precondition ((m test-1) (n test-2))
-  (print " >> precondition (test test-2)")
   (null (another-slot n)))
-
 (defmethod test-dbc :precondition ((m test-1) (n test-1))
-  (print " >> precondition (test test)")
   (not (zerop (my-slot m))))
 
-;; Postconditions:
+(defmethod test-dbc :around ((m test-1) (n test-1))
+  (call-next-method))
+(defmethod test-dbc :before ((m test-1) (n test-1))
+  (list m n 'before))
+(defmethod test-dbc ((m test-1) (n test-1))
+  (list m n))
+(defmethod test-dbc :after ((m test-1) (n test-1))
+  (list m n 'after))
 
-(defmethod test-dbc :postcondition
-      ((m test-1) (n test-2))
-  (print " >> postcondition (test test-2)")
+(defmethod test-dbc :postcondition ((m test-1) (n test-2))
   (null (another-slot n)))
-
 (defmethod test-dbc :postcondition ((m test-1) (n test-1))
-  (print " >> postcondition (test test)")
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
 (defmethod fail-invariant ((m test-1))
@@ -278,13 +229,11 @@
 (defclass feature-test ()
   ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
   (:invariant (lambda (class) 
-                (format t "~& >> Invariant check for class ~A~%" class)
                 (numberp (slot-value class 'slot1)))))
 
 (defgeneric test-dbc-/ (arg1 arg2)
   (:method-combination dbc :invariant-check nil)
   (:method :precondition "first arg zero" ((m feature-test) (n feature-test))
-    (format t "~& >> precondition (test test)~%")
     (not (zerop (slot1 m))))
   (:method ((m feature-test) (n feature-test))
     (/ (slot1 n) (slot1 m))))
