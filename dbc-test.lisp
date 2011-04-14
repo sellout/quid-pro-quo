@@ -50,15 +50,17 @@
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
    (your-slot :accessor your-slot :initform t))
-  (:invariant (lambda (instance)
-                (declare (ignore instance))
-                t)))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance) 
+                 (declare (ignore instance))
+                 t)))
 
 (defclass bar (foo) 
   ((yet-another-slot :accessor yet-another-slot :initform 'yas))
-  (:invariant (lambda (instance)
-                (declare (ignore instance))
-                t)))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 (declare (ignore instance))
+                 t)))
 
 (defmethod my-slot :precondition ((bar bar))
   t)
@@ -68,9 +70,10 @@
 
 (defclass bar-2 (foo)
   ()
-  (:invariant (lambda (instance)
-                (declare (ignorable instance))
-                t)))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 (declare (ignore instance))
+                 t)))
 
 #| Example:
 
@@ -104,17 +107,19 @@
 
 (defclass test-1 () 
   ((my-slot :accessor my-slot :initarg :my-slot :initform 0))
-  (:invariant "Invariant of test"
-              (lambda (instance)
-                (numberp (slot-value instance 'my-slot)))))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 "Invariant of test"
+                 (numberp (slot-value instance 'my-slot)))))
 
 (defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
 		 :initform nil))
-  (:invariant "Test-2 invariant"
-              (lambda (instance)
-                (< (length (slot-value instance 'another-slot))
-                   4))))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 "Test-2 invariant"
+                 (< (length (slot-value instance 'another-slot))
+                    4))))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
@@ -195,13 +200,14 @@
   (signals after-invariant-error
     (setf (slot-value (make-instance 'test-1) 'my-slot) nil)))
 
-(cl:defclass non-dbc-superclass ()
+(defclass non-dbc-superclass ()
   ((foo :initform 10 :initarg :foo :accessor foo)))
 
 (defclass dbc-subclass (non-dbc-superclass)
   ()
-  (:invariant (lambda (instance)
-                (> (slot-value instance 'foo) 5))))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 (> (slot-value instance 'foo) 5))))
 
 (test should-fail-invariant-on-subclass-creation
   (signals creation-invariant-error
@@ -216,8 +222,9 @@
 #| FIXME: currently this results in a stack overflow
 (defclass inv-class ()
   ((foo :initform 10 :initarg :foo :accessor foo))
-  (:invariant (lambda (instance)
-                (> (foo instance) 5))))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 (> (foo instance) 5))))
 
 (test should-not-recurse-on-reader-in-invariant
   (is (typep (make-instance 'inv-class) 'inv-class)))
@@ -228,8 +235,9 @@
 
 (defclass feature-test ()
   ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
-  (:invariant (lambda (instance) 
-                (numberp (slot-value instance 'slot1)))))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance) 
+                 (numberp (slot-value instance 'slot1)))))
 
 (defgeneric test-dbc-/ (arg1 arg2)
   (:method-combination dbc :invariant-check nil)

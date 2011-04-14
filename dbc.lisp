@@ -1,8 +1,7 @@
 (defpackage design-by-contract
-  (:use #:cl)
+  (:use #:closer-common-lisp #:closer-mop)
   (:nicknames #:dbc)
-  (:shadow #:defclass #:make-instance)
-  (:export #:dbc #:defclass #:make-instance
+  (:export #:dbc #:contracted-class
            #:contract-violation-error
            #:precondition-error #:postcondition-error
            #:invariant-error #:creation-invariant-error
@@ -133,7 +132,7 @@
 	   (post-form pre-form)
 	   #+:dbc-invariant-checks
 	   (inv-form (if (and invariant-check invariant)
-		         `(multiple-value-prog1
+                         `(multiple-value-prog1
                               (progn
                                 (unless (and ,@(call-methods invariant))
                                   ,@(raise-error 'before-invariant-error
@@ -149,94 +148,80 @@
 	   (inv-form post-form))
       inv-form)))
 
-(defun getf-and-remove (name list &optional acc)
-  "Find NAME in the alist LIST.  Returns nil as first value if NAME is
-not found, the valus associated with NAME otherwise.  The second value
-returned is LIST with the first occurence of pair (NAME value)
-removed."
-  (if (null list)
-      (values nil (reverse acc))
-      (if (eql (caar list) name)
-          (values (cdar list) (append (reverse acc) (rest list)))
-          (getf-and-remove name (rest list) (cons (first list) acc)))))
+(defclass contracted-class (standard-class)
+  ((invariants :initform () :initarg :invariants
+               :reader direct-class-invariants)))
 
-(defun define-slot-generics (slot)
-  "Returns a list with the reader and writer generic functions for a slot.
-The generic functions have method combination type `dbc'."
-  (let ((accessor (getf (rest slot) :accessor)))
-    (let ((reader (or (getf (rest slot) :reader) accessor))
-          (writer (or (getf (rest slot) :writer)
-                      (when accessor
-                        `(setf ,accessor)))))
-      (list (when reader
-              `(ensure-generic-function ',reader
-                                        :lambda-list '(object)
-                                        :method-combination '(dbc:dbc)))
-            (when writer
-              `(ensure-generic-function ',writer
-                                        :lambda-list '(new-value object)
-                                        :method-combination '(dbc:dbc)))))))
-
-(defun define-slot-accessor-invariants (class-name slot)
-  "Returns a list with method definitions for reader and writer
-invariants."
-  (let ((accessor (getf (rest slot) :accessor)))
-    (let ((reader (or (getf (rest slot) :reader) accessor))
-          (writer (or (getf (rest slot) :writer)
-                      (when accessor
-                        `(setf ,accessor)))))
-      (list (when reader
-              `(defmethod ,reader :invariant ((object ,class-name))
-                 (check-invariant object)))
-            (when writer
-              `(defmethod ,writer :invariant (value (object ,class-name))
-                 (declare (ignore value))
-                 (check-invariant object)))))))
-
-(defun define-check-invariant-method (invariant class-name)
-  "Returns a list containing the method on CHECK-INVARIANT specialized
-for CLASS-NAME and executing INVARIANT."
-  `((defmethod check-invariant ((object ,class-name))
-      (when (funcall ,invariant object)
-	(call-next-method)))))
-
-(defmacro defclass (&body body)
-  (destructuring-bind (name supers &optional slots &rest options) body
-    (multiple-value-bind (invariant-form new-options)
-        (getf-and-remove :invariant options)
-      (let ((documented-invariant (cadr invariant-form)))
-	(let ((invariant (or documented-invariant (car invariant-form))))
-	  `(progn
-	     ,@(if slots
-		   (apply #'append
-			  (mapcar (lambda (slot) (define-slot-generics slot))
-				  slots))
-                   '())
-	     (cl:defclass ,name ,supers
-               ,slots
-               ,@new-options)
-	     ,@(when invariant
-                 (define-check-invariant-method invariant name))
-	     ,@(when slots
-                 (apply #'append
-                        (mapcar (lambda (slot)
-				  (define-slot-accessor-invariants name slot))
-				slots)))))))))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defgeneric check-invariant (object)
-    (:documentation
-     "Methods on the generic `check-invariant' are used by the dbc
-method combination to perform the invariant check and should not
-directly be defined by the user.")))
-
-(defmethod check-invariant (object)
-  "Default invariant, always true."
-  (declare (ignore object))
+(defmethod validate-superclass
+    ((class contracted-class) (superclass standard-class))
   t)
 
-(defmethod make-instance (class-name &rest initargs)
-  (let ((object (apply #'cl:make-instance class-name initargs)))
-    (unless (check-invariant object)
-      (error 'creation-invariant-error :object object))
+(defgeneric effective-class-invariants (class)
+  (:method ((class contracted-class))
+    (apply #'append
+           (direct-class-invariants class)
+           (mapcar #'effective-class-invariants
+                   (class-direct-superclasses class))))
+  (:method (class)
+    (declare (ignore class))
+    nil))
+
+(defun check-effective-invariants (object)
+  (loop for invariant in (effective-class-invariants (class-of object))
+     if (not (funcall invariant object))
+     do (error 'creation-invariant-error
+               :object object
+               :description (documentation invariant 'function))))
+
+(defun passes-direct-invariants-p (object)
+  (loop for invariant in (direct-class-invariants (class-of object))
+     if (not (funcall invariant object))
+     return nil)
+  t)
+
+(defmethod initialize-instance :after
+    ((instance contracted-class) &key invariants &allow-other-keys)
+  (setf (slot-value instance 'invariants) (mapcar #'eval invariants))
+  ;; FIXME: need to do this for all slots, not just direct slots
+  (let* ((slots (class-direct-slots instance))
+         (readers (reduce #'append (mapcar #'slot-definition-readers slots)))
+         (writers (reduce #'append (mapcar #'slot-definition-writers slots))))
+    (append (mapcar (lambda (reader)
+                      (add-method (ensure-generic-function
+                                   reader
+                                   :lambda-list '(object)
+                                   :method-combination '(dbc:dbc))
+                                  (make-instance
+                                   'standard-method
+                                   :qualifiers '(:invariant)
+                                   :lambda-list '(object)
+                                   :specializers (list instance)
+                                   :function (lambda (object)
+                                               (passes-direct-invariants-p
+                                                object)))))
+                    readers)
+            (mapcar (lambda (writer)
+                      (add-method (ensure-generic-function
+                                   writer
+                                   :lambda-list '(new-value object)
+                                   :method-combination '(dbc:dbc))
+                                  (make-instance
+                                   'standard-method
+                                   :qualifiers '(:invariant)
+                                   :lambda-list '(new-value object)
+                                   :specializers (list (find-class t) instance)
+                                   :function (lambda (new-value object)
+                                               (declare (ignore new-value))
+                                               (passes-direct-invariants-p
+                                                object)))))
+                    writers))))
+
+(defmethod reinitialize-instance :after
+    ((instance contracted-class) &key invariants &allow-other-keys)
+  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)))
+
+(defmethod make-instance ((class contracted-class) &rest initargs)
+  (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
+  (let ((object (call-next-method)))
+    (check-effective-invariants object)
     object))

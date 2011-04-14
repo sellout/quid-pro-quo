@@ -7,6 +7,7 @@
   :author "Matthias Hölzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
+  :depends-on (closer-mop)
   :components ((:file "dbc"))
   :in-order-to ((test-op (load-op dbc-tests)))
   :perform (test-op :after (op c)
