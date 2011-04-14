@@ -176,8 +176,8 @@
 (defun passes-direct-invariants-p (object)
   (loop for invariant in (direct-class-invariants (class-of object))
      if (not (funcall invariant object))
-     return nil)
-  t)
+     return nil
+     finally (return t)))
 
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
