@@ -212,7 +212,6 @@
   (signals creation-invariant-error
     (make-instance 'dbc-subclass :foo 5)))
 
-;; FIXME: this is an expected failure
 (test should-fail-invariant-on-superclass-writer
   (let ((instance (make-instance 'dbc-subclass)))
     (signals after-invariant-error

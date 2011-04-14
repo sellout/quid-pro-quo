@@ -201,11 +201,16 @@
                                          (declare (ignore new-value))
                                          (passes-class-invariants-p object)))))
 
+(defun all-direct-slots (class)
+  (apply #'append
+         (class-direct-slots class)
+         (mapcar #'all-direct-slots (class-direct-superclasses class))))
+
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
   (setf (slot-value instance 'invariants) (mapcar #'eval invariants))
   ;; FIXME: need to do this for all slots, not just direct slots
-  (let ((slots (class-direct-slots instance)))
+  (let ((slots (all-direct-slots instance)))
     (mapc (lambda (reader) (add-reader-invariant reader instance))
           (reduce #'append (mapcar #'slot-definition-readers slots)))
     (mapc (lambda (writer) (add-writer-invariant writer instance))
