@@ -1,7 +1,7 @@
 (defpackage design-by-contract
   (:use #:closer-common-lisp #:closer-mop)
   (:nicknames #:dbc)
-  (:export #:dbc #:contracted-class
+  (:export #:contract #:contracted-class
            #:contract-violation-error
            #:precondition-error #:postcondition-error
            #:invariant-error #:creation-invariant-error
@@ -72,10 +72,10 @@
                      (object condition)
 		     (description condition)))))
 
-;;; The method combination DBC.
-;;; ==========================
+;;; The method combination CONTRACT.
+;;; ===============================
 
-(define-method-combination dbc
+(define-method-combination contract
   (&key (precondition-check t) (postcondition-check t) (invariant-check t))
   ((precondition (:precondition . *))
    (around (:around))
@@ -190,7 +190,7 @@
                       (add-method (ensure-generic-function
                                    reader
                                    :lambda-list '(object)
-                                   :method-combination '(dbc:dbc))
+                                   :method-combination '(contract))
                                   (make-instance
                                    'standard-method
                                    :qualifiers '(:invariant)
@@ -204,7 +204,7 @@
                       (add-method (ensure-generic-function
                                    writer
                                    :lambda-list '(new-value object)
-                                   :method-combination '(dbc:dbc))
+                                   :method-combination '(contract))
                                   (make-instance
                                    'standard-method
                                    :qualifiers '(:invariant)
