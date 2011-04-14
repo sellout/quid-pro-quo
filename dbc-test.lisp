@@ -50,14 +50,14 @@
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
    (your-slot :accessor your-slot :initform t))
-  (:invariant (lambda (class)
-                (declare (ignore class))
+  (:invariant (lambda (instance)
+                (declare (ignore instance))
                 t)))
 
 (defclass bar (foo) 
   ((yet-another-slot :accessor yet-another-slot :initform 'yas))
-  (:invariant (lambda (class)
-                (declare (ignore class))
+  (:invariant (lambda (instance)
+                (declare (ignore instance))
                 t)))
 
 (defmethod my-slot :precondition ((bar bar))
@@ -68,8 +68,8 @@
 
 (defclass bar-2 (foo)
   ()
-  (:invariant (lambda (class)
-                (declare (ignorable class))
+  (:invariant (lambda (instance)
+                (declare (ignorable instance))
                 t)))
 
 #| Example:
@@ -105,15 +105,15 @@
 (defclass test-1 () 
   ((my-slot :accessor my-slot :initarg :my-slot :initform 0))
   (:invariant "Invariant of test"
-              (lambda (class)
-                (numberp (slot-value class 'my-slot)))))
+              (lambda (instance)
+                (numberp (slot-value instance 'my-slot)))))
 
 (defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
 		 :initform nil))
   (:invariant "Test-2 invariant"
-              (lambda (class)
-                (< (length (slot-value class 'another-slot))
+              (lambda (instance)
+                (< (length (slot-value instance 'another-slot))
                    4))))
 
 (test should-fail-on-invariant-of-superclass
@@ -228,8 +228,8 @@
 
 (defclass feature-test ()
   ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
-  (:invariant (lambda (class) 
-                (numberp (slot-value class 'slot1)))))
+  (:invariant (lambda (instance) 
+                (numberp (slot-value instance 'slot1)))))
 
 (defgeneric test-dbc-/ (arg1 arg2)
   (:method-combination dbc :invariant-check nil)
