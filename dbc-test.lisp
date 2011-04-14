@@ -1,6 +1,5 @@
 (defpackage dbc-test
   (:use #:dbc #:cl #:fiveam)
-  (:shadowing-import-from #:dbc #:defclass #:make-instance)
   (:export #:test-dbc))
 
 (in-package #:dbc-test)
