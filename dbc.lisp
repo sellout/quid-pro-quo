@@ -186,35 +186,32 @@
   (let* ((slots (class-direct-slots instance))
          (readers (reduce #'append (mapcar #'slot-definition-readers slots)))
          (writers (reduce #'append (mapcar #'slot-definition-writers slots))))
-    (append (mapcar (lambda (reader)
-                      (add-method (ensure-generic-function
-                                   reader
-                                   :lambda-list '(object)
-                                   :method-combination '(contract))
-                                  (make-instance
-                                   'standard-method
-                                   :qualifiers '(:invariant)
-                                   :lambda-list '(object)
-                                   :specializers (list instance)
-                                   :function (lambda (object)
-                                               (passes-effective-invariants-p
-                                                object)))))
-                    readers)
-            (mapcar (lambda (writer)
-                      (add-method (ensure-generic-function
-                                   writer
-                                   :lambda-list '(new-value object)
-                                   :method-combination '(contract))
-                                  (make-instance
-                                   'standard-method
-                                   :qualifiers '(:invariant)
-                                   :lambda-list '(new-value object)
-                                   :specializers (list (find-class t) instance)
-                                   :function (lambda (new-value object)
-                                               (declare (ignore new-value))
-                                               (passes-effective-invariants-p
-                                                object)))))
-                    writers))))
+    (mapc (lambda (reader)
+            (add-method (ensure-generic-function
+                         reader
+                         :lambda-list '(object)
+                         :method-combination '(contract))
+                        (make-instance
+                         'standard-method
+                         :qualifiers '(:invariant)
+                         :lambda-list '(object)
+                         :specializers (list instance)
+                         :function (lambda (object)
+                                     (passes-effective-invariants-p object)))))
+          readers)
+    (mapc (lambda (writer)
+            (add-method (ensure-generic-function writer
+                         :lambda-list '(new-value object)
+                         :method-combination '(contract))
+                        (make-instance
+                         'standard-method
+                         :qualifiers '(:invariant)
+                         :lambda-list '(new-value object)
+                         :specializers (list (find-class t) instance)
+                         :function (lambda (new-value object)
+                                     (declare (ignore new-value))
+                                     (passes-effective-invariants-p object)))))
+          writers)))
 
 (defmethod reinitialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
