@@ -2,7 +2,7 @@
   (:use #:cl)
   (:nicknames #:dbc)
   (:shadow #:defclass #:make-instance)
-  (:export #:dbc #:defclass #:make-instance
+  (:export #:contract #:defclass #:make-instance
            #:contract-violation-error
            #:precondition-error #:postcondition-error
            #:invariant-error #:creation-invariant-error
@@ -73,10 +73,10 @@
                      (object condition)
 		     (description condition)))))
 
-;;; The method combination DBC.
-;;; ==========================
+;;; The method combination CONTRACT.
+;;; ===============================
 
-(define-method-combination dbc
+(define-method-combination contract
   (&key (precondition-check t) (postcondition-check t) (invariant-check t))
   ((precondition (:precondition . *))
    (around (:around))
@@ -162,7 +162,7 @@ removed."
 
 (defun define-slot-generics (slot)
   "Returns a list with the reader and writer generic functions for a slot.
-The generic functions have method combination type `dbc'."
+The generic functions have method combination type `contract'."
   (let ((accessor (getf (rest slot) :accessor)))
     (let ((reader (or (getf (rest slot) :reader) accessor))
           (writer (or (getf (rest slot) :writer)
@@ -171,11 +171,11 @@ The generic functions have method combination type `dbc'."
       (list (when reader
               `(ensure-generic-function ',reader
                                         :lambda-list '(object)
-                                        :method-combination '(dbc:dbc)))
+                                        :method-combination '(contract)))
             (when writer
               `(ensure-generic-function ',writer
                                         :lambda-list '(new-value object)
-                                        :method-combination '(dbc:dbc)))))))
+                                        :method-combination '(contract)))))))
 
 (defun define-slot-accessor-invariants (class-name slot)
   "Returns a list with method definitions for reader and writer
@@ -226,7 +226,7 @@ for CLASS-NAME and executing INVARIANT."
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defgeneric check-invariant (object)
     (:documentation
-     "Methods on the generic `check-invariant' are used by the dbc
+     "Methods on the generic `check-invariant' are used by the contract
 method combination to perform the invariant check and should not
 directly be defined by the user.")))
 

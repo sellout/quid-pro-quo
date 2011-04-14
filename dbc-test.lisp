@@ -10,7 +10,7 @@
 (in-suite tests)
 
 (defgeneric test-dbc (arg1 arg2)
-  (:method-combination dbc :invariant-check nil)
+  (:method-combination contract :invariant-check nil)
 
   (:method :invariant ((m fixnum) (n integer))
     'foo)
@@ -232,7 +232,7 @@
                 (numberp (slot-value instance 'slot1)))))
 
 (defgeneric test-dbc-/ (arg1 arg2)
-  (:method-combination dbc :invariant-check nil)
+  (:method-combination contract :invariant-check nil)
   (:method :precondition "first arg zero" ((m feature-test) (n feature-test))
     (not (zerop (slot1 m))))
   (:method ((m feature-test) (n feature-test))
