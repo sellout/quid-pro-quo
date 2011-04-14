@@ -173,8 +173,8 @@
                :object object
                :description (documentation invariant 'function))))
 
-(defun passes-direct-invariants-p (object)
-  (loop for invariant in (direct-class-invariants (class-of object))
+(defun passes-effective-invariants-p (object)
+  (loop for invariant in (effective-class-invariants (class-of object))
      if (not (funcall invariant object))
      return nil
      finally (return t)))
@@ -197,7 +197,7 @@
                                    :lambda-list '(object)
                                    :specializers (list instance)
                                    :function (lambda (object)
-                                               (passes-direct-invariants-p
+                                               (passes-effective-invariants-p
                                                 object)))))
                     readers)
             (mapcar (lambda (writer)
@@ -212,7 +212,7 @@
                                    :specializers (list (find-class t) instance)
                                    :function (lambda (new-value object)
                                                (declare (ignore new-value))
-                                               (passes-direct-invariants-p
+                                               (passes-effective-invariants-p
                                                 object)))))
                     writers))))
 
