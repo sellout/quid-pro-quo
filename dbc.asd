@@ -8,7 +8,11 @@
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
   :depends-on (closer-mop)
-  :components ((:file "dbc"))
+  :pathname "src/"
+  :components ((:file "package")
+               (:file "conditions" :depends-on ("package"))
+               (:file "method-combination" :depends-on ("package"))
+               (:file "metaclass" :depends-on ("package")))
   :in-order-to ((test-op (load-op dbc-tests)))
   :perform (test-op :after (op c)
                     (funcall (intern "RUN!" :dbc-test)
