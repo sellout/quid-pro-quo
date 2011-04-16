@@ -36,7 +36,7 @@
                                        :lambda-list '(object)
                                        :method-combination '(contract))
               (make-instance 'standard-method
-                             :qualifiers '(:invariant)
+                             :qualifiers '(invariant)
                              :lambda-list '(object)
                              :specializers (list class)
                              :function #'passes-class-invariants-p)))
@@ -46,7 +46,7 @@
                                        :lambda-list '(new-value object)
                                        :method-combination '(contract))
               (make-instance 'standard-method
-                             :qualifiers '(:invariant)
+                             :qualifiers '(invariant)
                              :lambda-list '(new-value object)
                              :specializers (list (find-class t) class)
                              :function (lambda (new-value object)

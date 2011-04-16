@@ -11,13 +11,6 @@
 (defgeneric test-dbc (arg1 arg2)
   (:method-combination contract :invariant-check nil)
 
-  (:method :invariant ((m fixnum) (n integer))
-    'foo)
-  (:method :invariant ((m integer) (n fixnum))
-    'foo)
-  (:method :invariant ((m integer) (n integer))
-    'foo)
-
   (:method :precondition ((m fixnum) (n integer))
     (> m 123))
   (:method :precondition ((m integer) (n fixnum))

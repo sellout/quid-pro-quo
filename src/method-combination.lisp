@@ -10,7 +10,7 @@
     (&key (precondition-check t) (postcondition-check t) (invariant-check t))
   ((precondition (:precondition . *))
    (around (:around))
-   (invariant (:invariant . *))
+   (invariant (invariant . *))
    (before (:before))
    (primary () :required t)
    (after (:after))
