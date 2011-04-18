@@ -4,9 +4,7 @@
 ;;; of the contract occurs.
 
 (define-condition contract-violation-error (error)
-  ((description :reader description
-		:initarg :description
-		:initform "(no description available)"))
+  ((description :reader description :initarg :description :initform nil))
   (:report (lambda (condition stream)
              (format stream "Contract violation~@[: ~A~]."
                      (description condition)))))
@@ -14,14 +12,18 @@
 (define-condition precondition-error (contract-violation-error)
   ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-             (format stream "Precondition violation on ~A~@[: ~A~]."
+             (format stream
+                     "The caller of ~A broke the contract with a failed ~
+                      precondition~@[: ~A~]."
                      (method condition)
                      (description condition)))))
 
 (define-condition postcondition-error (contract-violation-error)
   ((method :reader method :initarg :method))
   (:report (lambda (condition stream)
-             (format stream "Postcondition violation on ~A~@[: ~A~]."
+             (format stream
+                     "~A broke the contract with a failed postcondition~
+                      ~@[: ~A~]."
                      (method condition)
                      (description condition)))))
 
@@ -50,6 +52,6 @@
   ()
   (:report (lambda (condition stream)
 	     (format stream
-                     "Invariant violation after creation of ~A~@[:~% ~A~]."
+                     "Invariant violation upon creation of ~A~@[:~% ~A~]."
                      (object condition)
 		     (description condition)))))
