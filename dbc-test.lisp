@@ -11,11 +11,12 @@
 (defgeneric test-dbc (arg1 arg2)
   (:method-combination contract :invariant-check nil)
 
-  (:method :precondition ((m fixnum) (n integer))
+  (:method :precondition "first arg > 123" ((m fixnum) (n integer))
     (> m 123))
-  (:method :precondition ((m integer) (n fixnum))
+  (:method :precondition "second arg < 100" ((m integer) (n fixnum))
     (< n 100))
-  (:method :precondition ((m integer) (n integer))
+  (:method :precondition "first arg = 12345678900987654321"
+           ((m integer) (n integer))
     (= m 12345678900987654321))
 
   (:method :around ((m integer) (n integer))
@@ -27,9 +28,9 @@
   (:method :after ((m integer) (n integer))
     (list (+ m 1) (+ n 1)))
 
-  (:method :postcondition ((m integer) (n fixnum))
+  (:method :postcondition "999" ((m integer) (n fixnum))
     999)
-  (:method :postcondition  ((m integer) (n integer))
+  (:method :postcondition "always true" ((m integer) (n integer))
     t))
 
 (test should-warn-overly-strict-precondition
@@ -121,11 +122,13 @@
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-2)) nil)))
 
-(defmethod test-dbc :precondition ((m test-2) (n test-1))
+(defmethod test-dbc :precondition "first arg < 123" ((m test-2) (n test-1))
   (< (my-slot m) 123))
-(defmethod test-dbc :precondition ((m test-1) (n test-2))
+(defmethod test-dbc :precondition "second arg needs null another-slot"
+                    ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-dbc :precondition ((m test-1) (n test-1))
+(defmethod test-dbc :precondition "first arg needs non-zero my-slot"
+                    ((m test-1) (n test-1))
   (not (zerop (my-slot m))))
 
 (defmethod test-dbc :around ((m test-1) (n test-1))
