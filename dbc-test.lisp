@@ -32,8 +32,12 @@
   (:method :postcondition  ((m integer) (n integer))
     t))
 
+(test should-warn-overly-strict-precondition
+  (signals overly-strict-precondition-warning
+    (test-dbc 12345678900987654321 100)))
+
 (test should-succeed-with-integers
-  (is (equal (list 1 2) (test-dbc 1 2))))
+  (is (equal (list 124 2) (test-dbc 124 2))))
 
 (test should-fail-n-<-100-precondition
   (signals precondition-error

@@ -55,3 +55,20 @@
                      "Invariant violation upon creation of ~A~@[:~% ~A~]."
                      (object condition)
 		     (description condition)))))
+
+(define-condition malformed-contract-warning (warning)
+  ((method :reader method :initarg :method)
+   (description :reader description :initarg :description :initform nil))
+  (:report (lambda (condition stream)
+             (format stream
+                     "The contract specified for ~A is not valid~@[: ~A~]."
+                     (method condition) (description condition)))))
+
+(define-condition overly-strict-precondition-warning
+    (malformed-contract-warning)
+  ()
+  (:report (lambda (condition stream)
+             (format stream
+                     "A more-specific precondition on ~A is stricter than a ~
+                      less-specific precondition~@[: ~A~]."
+                     (method condition) (description condition)))))

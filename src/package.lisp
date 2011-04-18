@@ -5,4 +5,5 @@
            #:contract-violation-error
            #:precondition-error #:postcondition-error
            #:invariant-error #:creation-invariant-error
-           #:before-invariant-error #:after-invariant-error))
+           #:before-invariant-error #:after-invariant-error
+           #:malformed-contract-warning #:overly-strict-precondition-warning))

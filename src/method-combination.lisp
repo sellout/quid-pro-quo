@@ -37,12 +37,22 @@
                             form))
 	   #+:dbc-precondition-checks
 	   (pre-form (if (and precondition-check precondition)
-			 `(if (or ,@(call-methods precondition))
-			      ,around-form
-                              (progn
+                         `(let* ((contract-results (list ,@(call-methods precondition)))
+                                 (first-failure (position-if #'null
+                                                             contract-results))
+                                 (last-success (position-if-not #'null
+                                                                contract-results
+                                                                :from-end t)))
+                            (when first-failure
+                              (when (and last-success
+                                         (< first-failure last-success))
+                                (warn 'overly-strict-precondition-warning
+                                      :method ,(first primary)))
+                              (when (= first-failure 0)
                                 ,@(raise-error 'precondition-error
                                                precondition
                                                :method (first primary))))
+                            ,around-form)
                          around-form))
 	   #-:dbc-precondition-checks
 	   (pre-form around-form)
