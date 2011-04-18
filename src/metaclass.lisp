@@ -20,7 +20,7 @@
 
 (defun check-effective-invariants (object)
   (loop for invariant in (effective-class-invariants (class-of object))
-     if (not (funcall invariant object))
+     unless (funcall invariant object)
      do (error 'creation-invariant-error
                :object object
                :description (documentation invariant 'function))))
@@ -31,6 +31,28 @@
      return nil
      finally (return t)))
 
+(defun check-slot-type-invariants (object)
+  (loop for slot in (class-slots (class-of object))
+     unless (typep (slot-value object (slot-definition-name slot))
+                   (slot-definition-type slot))
+     do (error 'creation-invariant-error
+               :object object
+               :description (format nil "Slot ~A of ~A must be of type ~A"
+                                    (slot-definition-name slot)
+                                    object
+                                    (slot-definition-type slot)))))
+
+(defun passes-slot-type-invariants-p (object)
+  (loop for slot in (class-slots (class-of object))
+     unless (typep (slot-value object (slot-definition-name slot))
+                   (slot-definition-type slot))
+     return nil
+     finally (return t)))
+
+(defun passes-invariants-p (object)
+  (and (passes-slot-type-invariants-p object)
+       (passes-class-invariants-p object)))
+
 (defun add-reader-invariant (reader class)
   (add-method (ensure-generic-function reader
                                        :lambda-list '(object)
@@ -39,7 +61,7 @@
                              :qualifiers '(invariant)
                              :lambda-list '(object)
                              :specializers (list class)
-                             :function #'passes-class-invariants-p)))
+                             :function #'passes-invariants-p)))
 
 (defun add-writer-invariant (writer class)
   (add-method (ensure-generic-function writer
@@ -51,7 +73,7 @@
                              :specializers (list (find-class t) class)
                              :function (lambda (new-value object)
                                          (declare (ignore new-value))
-                                         (passes-class-invariants-p object)))))
+                                         (passes-invariants-p object)))))
 
 (defun all-direct-slots (class)
   (apply #'append
@@ -75,5 +97,6 @@
 (defmethod make-instance ((class contracted-class) &rest initargs)
   (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
   (let ((object (call-next-method)))
+    (check-slot-type-invariants object)
     (check-effective-invariants object)
     object))

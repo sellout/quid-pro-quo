@@ -230,7 +230,7 @@
 ;;; sure everything seems to work.
 
 (defclass feature-test ()
-  ((slot1 :accessor slot1 :initarg :slot1 :initform 0))
+  ((slot1 :accessor slot1 :initarg :slot1 :initform 0 :type integer))
   (:metaclass contracted-class)
   (:invariants (lambda (instance) 
                  (numberp (slot-value instance 'slot1)))))
@@ -245,6 +245,11 @@
 (test should-fail-not-zerop-precondition
   (signals precondition-error
     (test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))))
+
+(test should-fail-type-invariant
+  ;; NOTE: fall back to type error, in case the compiler does the type check
+  (signals ((or creation-invariant-error type-error))
+    (make-instance 'feature-test :slot1 nil)))
 
 (test should-succeed-and-divide
   (is (= 4
