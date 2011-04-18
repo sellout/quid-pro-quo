@@ -33,11 +33,11 @@
     t))
 
 (test should-succeed-with-integers
-  (is (equal (list 1 2) (dbc-test:test-dbc 1 2))))
+  (is (equal (list 1 2) (test-dbc 1 2))))
 
 (test should-fail-n-<-100-precondition
   (signals precondition-error
-    (dbc-test:test-dbc 1 12345678900987654321)))
+    (test-dbc 1 12345678900987654321)))
 
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
@@ -144,28 +144,26 @@
 (test should-succeed-with-test-objects
   (let ((first (make-instance 'test-1 :my-slot 1))
         (second (make-instance 'test-1)))
-    (is (equal (list first second)
-               (dbc-test:test-dbc first second)))))
+    (is (equal (list first second) (test-dbc first second)))))
 
 (test should-fail-not-zerop-my-slot-precondition
   (let ((first (make-instance 'test-1))
         (second (make-instance 'test-1)))
     (signals precondition-error
-      (dbc-test:test-dbc first second))))
+      (test-dbc first second))))
 
 (test should-pass-with-weakened-precondition
   (let ((first (make-instance 'test-2))
         (second (make-instance 'test-1)))
     ;; This succeeds because the method TEST-DBC has a weakened precondition for
     ;; first arguments of type TEST-2.
-    (is (equal (list first second)
-               (dbc-test:test-dbc first second)))))
+    (is (equal (list first second) (test-dbc first second)))))
 
 (test should-fail-zerop-my-slot-postcondition
   (let ((first (make-instance 'test-1 :my-slot 1))
         (second (make-instance 'test-1 :my-slot 1)))
     (signals postcondition-error
-      (dbc-test:test-dbc first second))))
+      (test-dbc first second))))
 
 (test should-fail-with-weakened-postcondition
   (let ((first (make-instance 'test-1 :my-slot 1))
@@ -173,7 +171,7 @@
     ;; The weakened postcondition for second argument of class TEST-2 does not
     ;; cause the method to succeed.
     (signals postcondition-error
-      (dbc-test:test-dbc first second))))
+      (test-dbc first second))))
 
 (test should-create-successfully
   (is (typep (make-instance 'test-1 :my-slot -1)
