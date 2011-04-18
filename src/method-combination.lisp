@@ -16,19 +16,15 @@
    (after (:after))
    (postcondition (:postcondition . *)))
   (labels ((call-methods (methods)
-             (maplist (lambda (method-list)
-                        `(call-method ,(car method-list) ,(cdr method-list)))
-                      methods))
+             (mapcar (lambda (method) `(call-method ,method)) methods))
 	   (raise-error (error-type methods &rest condition-parameters)
-	     (maplist (lambda (method-list)
-                        `(unless (call-method ,(car method-list)
-                                              ,(cdr method-list))
-                           (error ',error-type
-                                  :description
-                                  ,(second (method-qualifiers
-                                            (car method-list)))
-                                  ,@condition-parameters)))
-                      methods)))
+	     (mapcar (lambda (method)
+                       `(unless (call-method ,method)
+                          (error ',error-type
+                                 :description
+                                 ,(second (method-qualifiers method))
+                                 ,@condition-parameters)))
+                     methods)))
     (let* ((form (if (or before after (rest primary))
 		     `(multiple-value-prog1
                           (progn ,@(call-methods before)
