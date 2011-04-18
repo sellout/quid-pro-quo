@@ -15,15 +15,16 @@
    (primary () :required t)
    (after (:after))
    (postcondition (:postcondition . *)))
-  (labels ((call-methods (methods)
-             (mapcar (lambda (method) `(call-method ,method)) methods))
-	   (raise-error (error-type methods &rest condition-parameters)
-	     (mapcar (lambda (method)
-                       `(unless (call-method ,method)
-                          (error ',error-type
-                                 :description
-                                 ,(second (method-qualifiers method))
-                                 ,@condition-parameters)))
+  (labels ((call-methods
+               (methods &optional error-type &rest condition-parameters)
+             (mapcar (lambda (method)
+                       (if error-type
+                           `(unless (call-method ,method)
+                              (error ',error-type
+                                     :description
+                                     ,(second (method-qualifiers method))
+                                     ,@condition-parameters))
+                           `(call-method ,method)))
                      methods)))
     (let* ((form (if (or before after (rest primary))
 		     `(multiple-value-prog1
@@ -49,9 +50,11 @@
                                 (warn 'overly-strict-precondition-warning
                                       :method ,(first primary)))
                               (when (= first-failure 0)
-                                ,@(raise-error 'precondition-error
-                                               precondition
-                                               :method (first primary))))
+                                (error 'precondition-error
+                                       :description ,(second
+                                                      (method-qualifiers
+                                                       (first precondition)))
+                                       :method ,(first primary))))
                             ,around-form)
                          around-form))
 	   #-:dbc-precondition-checks
@@ -60,10 +63,9 @@
 	   (post-form (if (and postcondition-check postcondition)
                           `(multiple-value-prog1
                                ,pre-form
-                             (unless (and ,@(call-methods postcondition))
-                               ,@(raise-error 'postcondition-error
-                                              postcondition
-                                              :method (first primary))))
+                             ,@(call-methods postcondition
+                                             'postcondition-error
+                                             :method (first primary)))
                           pre-form))
 	   #-:dbc-postcondition-checks
 	   (post-form pre-form)
@@ -71,15 +73,13 @@
 	   (inv-form (if (and invariant-check invariant)
                          `(multiple-value-prog1
                               (progn
-                                (unless (and ,@(call-methods invariant))
-                                  ,@(raise-error 'before-invariant-error
-                                                 invariant
-                                                 :method (first primary)))
+                                ,@(call-methods invariant
+                                                'before-invariant-error
+                                                :method (first primary))
                                 ,post-form)
-                            (unless (and ,@(call-methods invariant))
-                              ,@(raise-error 'after-invariant-error
-                                             invariant
-                                             :method (first primary))))
+                             ,@(call-methods invariant
+                                             'after-invariant-error
+                                             :method (first primary)))
                          post-form))
 	   #-:dbc-invariant-checks
 	   (inv-form post-form))
