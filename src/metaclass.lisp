@@ -83,7 +83,6 @@
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
   (setf (slot-value instance 'invariants) (mapcar #'eval invariants))
-  ;; FIXME: need to do this for all slots, not just direct slots
   (let ((slots (all-direct-slots instance)))
     (mapc (lambda (reader) (add-reader-invariant reader instance))
           (reduce #'append (mapcar #'slot-definition-readers slots)))
