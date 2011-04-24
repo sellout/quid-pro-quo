@@ -4,7 +4,7 @@
 (in-package #:quid-pro-quo-system)
 
 (defsystem quid-pro-quo
-  :author "Matthias Hölzl <tc@gauss.muc.de>"
+  :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
   :depends-on (closer-mop)
@@ -22,7 +22,7 @@
   (values nil))
 
 (defsystem quid-pro-quo-tests
-  :author "Matthias Hölzl <tc@gauss.muc.de>"
+  :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :depends-on (quid-pro-quo fiveam)
   :components ((:file "quid-pro-quo-test")))
