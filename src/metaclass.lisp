@@ -1,4 +1,4 @@
-(in-package #:dbc)
+(in-package #:quid-pro-quo)
 
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants

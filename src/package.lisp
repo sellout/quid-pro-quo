@@ -1,6 +1,6 @@
-(defpackage design-by-contract
+(defpackage quid-pro-quo
   (:use #:closer-common-lisp #:closer-mop)
-  (:nicknames #:dbc)
+  (:nicknames #:qpq)
   (:export #:contract #:contracted-class
            #:contract-violation-error
            #:precondition-error #:postcondition-error

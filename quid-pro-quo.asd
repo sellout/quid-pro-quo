@@ -1,9 +1,9 @@
-(defpackage dbc-system
+(defpackage quid-pro-quo-system
   (:use #:cl #:asdf))
 
-(in-package #:dbc-system)
+(in-package #:quid-pro-quo-system)
 
-(defsystem dbc
+(defsystem quid-pro-quo
   :author "Matthias Hölzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
@@ -13,17 +13,16 @@
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
                (:file "metaclass" :depends-on ("package")))
-  :in-order-to ((test-op (load-op dbc-tests)))
+  :in-order-to ((test-op (load-op quid-pro-quo-tests)))
   :perform (test-op :after (op c)
-                    (funcall (intern "RUN!" :dbc-test)
-                             (intern "TESTS" :dbc-test))))
+                    (funcall (intern "RUN!" :quid-pro-quo-test)
+                             (intern "TESTS" :quid-pro-quo-test))))
 
-(defmethod operation-done-p
-    ((op test-op) (c (eql (find-system :dbc))))
+(defmethod operation-done-p ((op test-op) (c (eql (find-system :quid-pro-quo))))
   (values nil))
 
-(defsystem dbc-tests
+(defsystem quid-pro-quo-tests
   :author "Matthias Hölzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
-  :depends-on (dbc fiveam)
-  :components ((:file "dbc-test")))
+  :depends-on (quid-pro-quo fiveam)
+  :components ((:file "quid-pro-quo-test")))

@@ -1,10 +1,56 @@
-(in-package #:dbc)
+(in-package #:quid-pro-quo)
+
+#|
+(defun enabled-contracts ()
+  (intersection '(:qpq-invariant-checks
+                  :qpq-precondition-checks
+                  :qpq-postcondition-checks)
+                *features*))
+
+(defun set-contract-state (type onp)
+  (if onp
+      (pushnew type *features*)
+      (setf *features* (remove type *features*))))
+
+(defun enable-contracts
+    (&key (invariants t) (preconditions t) (postconditions t))
+  (set-contract-state :qpq-invariant-checks invariants)
+  (set-contract-state :qpq-precondition-checks preconditions)
+  (set-contract-state :qpq-postcondition-checks postconditions))
+
+(defun disable-contracts ()
+  (enable-contracts :invariants nil :preconditions nil :postconditions nil))
+
+(defmacro with-contracts-enabled
+    ((&rest args &key (invariants t) (preconditions t) (postconditions t))
+     &body body)
+  (let ((enabled-contracts (gensym "ENABLED-CONTRACTS")))
+    `(let ((,enabled-contracts (enabled-contracts)))
+       (unwind-protect
+            (progn (enable-contracts ,@args)
+                   ,@body)
+         (disable-contracts)
+         (mapcar (lambda (type) (set-contract-state type t))
+                 ,enabled-contracts)))))
+
+(defmacro with-contracts-disabled (() &body body)
+  (let ((enabled-contracts (gensym "ENABLED-CONTRACTS")))
+    `(let ((,enabled-contracts (enabled-contracts)))
+       (unwind-protect
+            (progn (disable-contracts)
+                   ,@body)
+         (mapcar (lambda (type) (set-contract-state type t))
+                 ,enabled-contracts)))))
 
 ;;; Enable all checks for testing purposes
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (pushnew :dbc-precondition-checks *features*)
-  (pushnew :dbc-postcondition-checks *features*)
-  (pushnew :dbc-invariant-checks *features*))
+  (enable-contracts))
+|#
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (pushnew :qpq-precondition-checks *features*)
+  (pushnew :qpq-postcondition-checks *features*)
+  (pushnew :qpq-invariant-checks *features*))
 
 (define-method-combination contract
     (&key (precondition-check t) (postcondition-check t) (invariant-check t))
@@ -36,7 +82,7 @@
                             `(call-method ,(first around)
                                           (,@(rest around) (make-method ,form)))
                             form))
-	   #+:dbc-precondition-checks
+	   #+:qpq-precondition-checks
 	   (pre-form (if (and precondition-check precondition)
                          `(let* ((contract-results (list ,@(call-methods precondition)))
                                  (first-failure (position-if #'null
@@ -57,9 +103,9 @@
                                        :method ,(first primary))))
                             ,around-form)
                          around-form))
-	   #-:dbc-precondition-checks
+	   #-:qpq-precondition-checks
 	   (pre-form around-form)
-	   #+:dbc-postcondition-checks
+	   #+:qpq-postcondition-checks
 	   (post-form (if (and postcondition-check postcondition)
                           `(multiple-value-prog1
                                ,pre-form
@@ -67,9 +113,9 @@
                                              'postcondition-error
                                              :method (first primary)))
                           pre-form))
-	   #-:dbc-postcondition-checks
+	   #-:qpq-postcondition-checks
 	   (post-form pre-form)
-	   #+:dbc-invariant-checks
+	   #+:qpq-invariant-checks
 	   (inv-form (if (and invariant-check invariant)
                          `(multiple-value-prog1
                               (progn
@@ -81,6 +127,6 @@
                                              'after-invariant-error
                                              :method (first primary)))
                          post-form))
-	   #-:dbc-invariant-checks
+	   #-:qpq-invariant-checks
 	   (inv-form post-form))
       inv-form)))

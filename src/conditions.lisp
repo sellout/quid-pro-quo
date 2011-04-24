@@ -1,4 +1,4 @@
-(in-package #:design-by-contract)
+(in-package #:quid-pro-quo)
 
 ;;; We signal a condition of the appropriate type whenever a violation
 ;;; of the contract occurs.

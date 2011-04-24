@@ -1,14 +1,14 @@
-(defpackage dbc-test
-  (:use #:dbc #:cl #:fiveam)
-  (:export #:test-dbc))
+(defpackage quid-pro-quo-test
+  (:use #:quid-pro-quo #:cl #:fiveam)
+  (:export #:test-qpq))
 
-(in-package #:dbc-test)
+(in-package #:quid-pro-quo-test)
 
 (def-suite tests)
 
 (in-suite tests)
 
-(defgeneric test-dbc (arg1 arg2)
+(defgeneric test-qpq (arg1 arg2)
   (:method-combination contract :invariant-check nil)
 
   (:method :precondition "first arg > 123" ((m fixnum) (n integer))
@@ -35,14 +35,14 @@
 
 (test should-warn-overly-strict-precondition
   (signals overly-strict-precondition-warning
-    (test-dbc 12345678900987654321 100)))
+    (test-qpq 12345678900987654321 100)))
 
 (test should-succeed-with-integers
-  (is (equal (list 124 2) (test-dbc 124 2))))
+  (is (equal (list 124 2) (test-qpq 124 2))))
 
 (test should-fail-n-<-100-precondition
   (signals precondition-error
-    (test-dbc 1 12345678900987654321)))
+    (test-qpq 1 12345678900987654321)))
 
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)
@@ -122,27 +122,27 @@
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-2)) nil)))
 
-(defmethod test-dbc :precondition "first arg < 123" ((m test-2) (n test-1))
+(defmethod test-qpq :precondition "first arg < 123" ((m test-2) (n test-1))
   (< (my-slot m) 123))
-(defmethod test-dbc :precondition "second arg needs null another-slot"
+(defmethod test-qpq :precondition "second arg needs null another-slot"
                     ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-dbc :precondition "first arg needs non-zero my-slot"
+(defmethod test-qpq :precondition "first arg needs non-zero my-slot"
                     ((m test-1) (n test-1))
   (not (zerop (my-slot m))))
 
-(defmethod test-dbc :around ((m test-1) (n test-1))
+(defmethod test-qpq :around ((m test-1) (n test-1))
   (call-next-method))
-(defmethod test-dbc :before ((m test-1) (n test-1))
+(defmethod test-qpq :before ((m test-1) (n test-1))
   (list m n 'before))
-(defmethod test-dbc ((m test-1) (n test-1))
+(defmethod test-qpq ((m test-1) (n test-1))
   (list m n))
-(defmethod test-dbc :after ((m test-1) (n test-1))
+(defmethod test-qpq :after ((m test-1) (n test-1))
   (list m n 'after))
 
-(defmethod test-dbc :postcondition ((m test-1) (n test-2))
+(defmethod test-qpq :postcondition ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-dbc :postcondition ((m test-1) (n test-1))
+(defmethod test-qpq :postcondition ((m test-1) (n test-1))
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
 (defmethod fail-invariant ((m test-1))
@@ -151,26 +151,26 @@
 (test should-succeed-with-test-objects
   (let ((first (make-instance 'test-1 :my-slot 1))
         (second (make-instance 'test-1)))
-    (is (equal (list first second) (test-dbc first second)))))
+    (is (equal (list first second) (test-qpq first second)))))
 
 (test should-fail-not-zerop-my-slot-precondition
   (let ((first (make-instance 'test-1))
         (second (make-instance 'test-1)))
     (signals precondition-error
-      (test-dbc first second))))
+      (test-qpq first second))))
 
 (test should-pass-with-weakened-precondition
   (let ((first (make-instance 'test-2))
         (second (make-instance 'test-1)))
-    ;; This succeeds because the method TEST-DBC has a weakened precondition for
+    ;; This succeeds because the method TEST-QPQ has a weakened precondition for
     ;; first arguments of type TEST-2.
-    (is (equal (list first second) (test-dbc first second)))))
+    (is (equal (list first second) (test-qpq first second)))))
 
 (test should-fail-zerop-my-slot-postcondition
   (let ((first (make-instance 'test-1 :my-slot 1))
         (second (make-instance 'test-1 :my-slot 1)))
     (signals postcondition-error
-      (test-dbc first second))))
+      (test-qpq first second))))
 
 (test should-fail-with-weakened-postcondition
   (let ((first (make-instance 'test-1 :my-slot 1))
@@ -178,7 +178,7 @@
     ;; The weakened postcondition for second argument of class TEST-2 does not
     ;; cause the method to succeed.
     (signals postcondition-error
-      (test-dbc first second))))
+      (test-qpq first second))))
 
 (test should-create-successfully
   (is (typep (make-instance 'test-1 :my-slot -1)
@@ -197,10 +197,10 @@
   (signals after-invariant-error
     (setf (slot-value (make-instance 'test-1) 'my-slot) nil)))
 
-(defclass non-dbc-superclass ()
+(defclass non-contracted-superclass ()
   ((foo :initform 10 :initarg :foo :accessor foo)))
 
-(defclass dbc-subclass (non-dbc-superclass)
+(defclass contracted-subclass (non-contracted-superclass)
   ()
   (:metaclass contracted-class)
   (:invariants (lambda (instance)
@@ -208,10 +208,10 @@
 
 (test should-fail-invariant-on-subclass-creation
   (signals creation-invariant-error
-    (make-instance 'dbc-subclass :foo 5)))
+    (make-instance 'contracted-subclass :foo 5)))
 
 (test should-fail-invariant-on-superclass-writer
-  (let ((instance (make-instance 'dbc-subclass)))
+  (let ((instance (make-instance 'contracted-subclass)))
     (signals after-invariant-error
       (setf (foo instance) 5))))
 
@@ -235,7 +235,7 @@
   (:invariants (lambda (instance) 
                  (numberp (slot-value instance 'slot1)))))
 
-(defgeneric test-dbc-/ (arg1 arg2)
+(defgeneric test-qpq-/ (arg1 arg2)
   (:method-combination contract :invariant-check nil)
   (:method :precondition "first arg zero" ((m feature-test) (n feature-test))
     (not (zerop (slot1 m))))
@@ -244,7 +244,7 @@
 
 (test should-fail-not-zerop-precondition
   (signals precondition-error
-    (test-dbc-/ (make-instance 'feature-test) (make-instance 'feature-test))))
+    (test-qpq-/ (make-instance 'feature-test) (make-instance 'feature-test))))
 
 (test should-fail-type-invariant
   ;; NOTE: fall back to type error, in case the compiler does the type check
@@ -253,5 +253,5 @@
 
 (test should-succeed-and-divide
   (is (= 4
-         (test-dbc-/ (make-instance 'feature-test :slot1 2)
+         (test-qpq-/ (make-instance 'feature-test :slot1 2)
                      (make-instance 'feature-test :slot1 8)))))
