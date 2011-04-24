@@ -53,27 +53,34 @@
   (and (passes-slot-type-invariants-p object)
        (passes-class-invariants-p object)))
 
+(defun add-invariant (function-name lambda-list specializers lambda-body)
+  (let* ((generic-function (ensure-generic-function
+                            function-name
+                            :lambda-list lambda-list
+                            :method-combination '(contract)))
+         (method-prototype (class-prototype (find-class 'standard-method)))
+         (method-function (compile nil
+                                   (make-method-lambda generic-function
+                                                       method-prototype
+                                                       `(lambda ,lambda-list
+                                                          ,@lambda-body)
+                                                       nil))))
+    (add-method generic-function
+                (make-instance 'standard-method
+                               :qualifiers '(invariant)
+                               :lambda-list lambda-list
+                               :specializers specializers
+                               :function method-function))))
+
 (defun add-reader-invariant (reader class)
-  (add-method (ensure-generic-function reader
-                                       :lambda-list '(object)
-                                       :method-combination '(contract))
-              (make-instance 'standard-method
-                             :qualifiers '(invariant)
-                             :lambda-list '(object)
-                             :specializers (list class)
-                             :function #'passes-invariants-p)))
+  (add-invariant reader '(object) (list class) '((passes-invariants-p object))))
 
 (defun add-writer-invariant (writer class)
-  (add-method (ensure-generic-function writer
-                                       :lambda-list '(new-value object)
-                                       :method-combination '(contract))
-              (make-instance 'standard-method
-                             :qualifiers '(invariant)
-                             :lambda-list '(new-value object)
-                             :specializers (list (find-class t) class)
-                             :function (lambda (new-value object)
-                                         (declare (ignore new-value))
-                                         (passes-invariants-p object)))))
+  (add-invariant writer
+                 '(new-value object)
+                 (list (find-class t) class)
+                 '((declare (ignore new-value))
+                   (passes-invariants-p object))))
 
 (defun all-direct-slots (class)
   (apply #'append

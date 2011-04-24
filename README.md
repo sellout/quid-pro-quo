@@ -39,5 +39,5 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 * CMUCL – currently errors
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
 * LispWorks – currently errors
-* SBCL – currently errors
+* SBCL – **YES**
 * SCL – ?
