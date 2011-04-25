@@ -28,6 +28,8 @@
   (:method :after ((m integer) (n integer))
     (list (+ m 1) (+ n 1)))
 
+  (:method :ensure "results are fixnum" ((m fixnum) (n fixnum))
+    (<= most-negative-fixnum (reduce #'+ (results)) most-positive-fixnum))
   (:method :ensure "999" ((m integer) (n fixnum))
     999)
   (:method :ensure "always true" ((m integer) (n integer))
@@ -43,6 +45,10 @@
 (test should-fail-n-<-100-precondition
   (signals precondition-error
     (test-qpq 1 12345678900987654321)))
+
+(test should-fail-result-postcondition
+  (signals postcondition-error
+    (test-qpq most-positive-fixnum most-positive-fixnum)))
 
 (defclass foo () 
   ((my-slot :accessor my-slot :initform nil)

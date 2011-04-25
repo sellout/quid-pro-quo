@@ -5,6 +5,12 @@
   (pushnew :qpq-postcondition-checks *features*)
   (pushnew :qpq-invariant-checks *features*))
 
+(defun results ()
+  "This is really only available to :ENSURE methods. It returns the values
+   returned by the primary/around method, so they can be checked in the
+   postcondition."
+  (values-list %results))
+
 (define-method-combination contract
     (&key (precondition-check t) (postcondition-check t) (invariant-check t))
   ((precondition (:require . *))
@@ -60,11 +66,12 @@
 	   (pre-form around-form)
 	   #+:qpq-postcondition-checks
 	   (post-form (if (and postcondition-check postcondition)
-                          `(multiple-value-prog1
-                               ,pre-form
+                          `(let ((%results (multiple-value-list ,pre-form)))
+                             (declare (special %results))
                              ,@(call-methods postcondition
                                              'postcondition-error
-                                             :method (first primary)))
+                                             :method (first primary))
+                             (results))
                           pre-form))
 	   #-:qpq-postcondition-checks
 	   (post-form pre-form)

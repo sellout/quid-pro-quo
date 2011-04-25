@@ -1,7 +1,7 @@
 (defpackage quid-pro-quo
   (:use #:closer-common-lisp #:closer-mop)
   (:nicknames #:qpq)
-  (:export #:contract #:contracted-class
+  (:export #:contract #:contracted-class #:results
            #:contract-violation-error
            #:precondition-error #:postcondition-error
            #:invariant-error #:creation-invariant-error
