@@ -54,13 +54,13 @@
 
 (define-method-combination contract
     (&key (precondition-check t) (postcondition-check t) (invariant-check t))
-  ((precondition (:precondition . *))
+  ((precondition (:require . *))
    (around (:around))
    (invariant (invariant . *))
    (before (:before))
    (primary () :required t)
    (after (:after))
-   (postcondition (:postcondition . *)))
+   (postcondition (:ensure . *)))
   (labels ((call-methods
                (methods &optional error-type &rest condition-parameters)
              (mapcar (lambda (method)

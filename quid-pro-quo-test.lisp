@@ -11,11 +11,11 @@
 (defgeneric test-qpq (arg1 arg2)
   (:method-combination contract :invariant-check nil)
 
-  (:method :precondition "first arg > 123" ((m fixnum) (n integer))
+  (:method :require "first arg > 123" ((m fixnum) (n integer))
     (> m 123))
-  (:method :precondition "second arg < 100" ((m integer) (n fixnum))
+  (:method :require "second arg < 100" ((m integer) (n fixnum))
     (< n 100))
-  (:method :precondition "first arg = 12345678900987654321"
+  (:method :require "first arg = 12345678900987654321"
            ((m integer) (n integer))
     (= m 12345678900987654321))
 
@@ -28,9 +28,9 @@
   (:method :after ((m integer) (n integer))
     (list (+ m 1) (+ n 1)))
 
-  (:method :postcondition "999" ((m integer) (n fixnum))
+  (:method :ensure "999" ((m integer) (n fixnum))
     999)
-  (:method :postcondition "always true" ((m integer) (n integer))
+  (:method :ensure "always true" ((m integer) (n integer))
     t))
 
 (test should-warn-overly-strict-precondition
@@ -59,10 +59,10 @@
                  (declare (ignore instance))
                  t)))
 
-(defmethod my-slot :precondition ((bar bar))
+(defmethod my-slot :require ((bar bar))
   t)
 
-(defmethod my-slot :postcondition ((bar bar))
+(defmethod my-slot :ensure ((bar bar))
   t)
 
 (defclass bar-2 (foo)
@@ -122,12 +122,12 @@
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-2)) nil)))
 
-(defmethod test-qpq :precondition "first arg < 123" ((m test-2) (n test-1))
+(defmethod test-qpq :require "first arg < 123" ((m test-2) (n test-1))
   (< (my-slot m) 123))
-(defmethod test-qpq :precondition "second arg needs null another-slot"
+(defmethod test-qpq :require "second arg needs null another-slot"
                     ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-qpq :precondition "first arg needs non-zero my-slot"
+(defmethod test-qpq :require "first arg needs non-zero my-slot"
                     ((m test-1) (n test-1))
   (not (zerop (my-slot m))))
 
@@ -140,9 +140,9 @@
 (defmethod test-qpq :after ((m test-1) (n test-1))
   (list m n 'after))
 
-(defmethod test-qpq :postcondition ((m test-1) (n test-2))
+(defmethod test-qpq :ensure ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-qpq :postcondition ((m test-1) (n test-1))
+(defmethod test-qpq :ensure ((m test-1) (n test-1))
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
 (defmethod fail-invariant ((m test-1))
@@ -237,7 +237,7 @@
 
 (defgeneric test-qpq-/ (arg1 arg2)
   (:method-combination contract :invariant-check nil)
-  (:method :precondition "first arg zero" ((m feature-test) (n feature-test))
+  (:method :require "first arg isn't zero" ((m feature-test) (n feature-test))
     (not (zerop (slot1 m))))
   (:method ((m feature-test) (n feature-test))
     (/ (slot1 n) (slot1 m))))

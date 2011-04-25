@@ -13,17 +13,17 @@
   ((method :initarg :method))
   (:report (lambda (condition stream)
              (format stream
-                     "The caller of ~A broke the contract with a failed ~
-                      precondition~@[: ~A~]."
-                     (slot-value condition 'method)
-                     (description condition)))))
+                     "The caller of ~A failed to meet the requirement~
+                      ~:[s of~;~:* that ~A for~] ~A."
+                     (description condition)
+                     (slot-value condition 'method)))))
 
 (define-condition postcondition-error (contract-violation-error)
   ((method :initarg :method))
   (:report (lambda (condition stream)
              (format stream
-                     "~A broke the contract with a failed postcondition~
-                      ~@[: ~A~]."
+                     "~A failed to ensure ~
+                      ~:[its guarantees~;~:*the guarantee that ~A~]."
                      (slot-value condition 'method)
                      (description condition)))))
 
@@ -34,7 +34,7 @@
   ((method :initarg :method))
   (:report (lambda (condition stream)
 	     (format stream
-                     "Invariant violation ~@[on ~A ~]before ~A~@[:~% ~A~]."
+                     "Invariant violation ~@[on ~A ~]before ~A~@[: ~A~]."
                      (object condition)
                      (slot-value condition 'method)
 		     (description condition)))))
@@ -43,7 +43,7 @@
   ((method :initarg :method))
   (:report (lambda (condition stream)
 	     (format stream
-                     "Invariant violation ~@[on ~A ~]after ~A~@[:~% ~A~]."
+                     "Invariant violation ~@[on ~A ~]after ~A~@[: ~A~]."
                      (object condition)
                      (slot-value condition 'method)
 		     (description condition)))))
@@ -52,7 +52,7 @@
   ()
   (:report (lambda (condition stream)
 	     (format stream
-                     "Invariant violation upon creation of ~A~@[:~% ~A~]."
+                     "Invariant violation upon creation of ~A~@[: ~A~]."
                      (object condition)
 		     (description condition)))))
 
