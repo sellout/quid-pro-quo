@@ -13,7 +13,7 @@
   ((method :initarg :method))
   (:report (lambda (condition stream)
              (format stream
-                     "The caller of ~A failed to meet the requirement~
+                     "The caller failed to meet the requirement~
                       ~:[s of~;~:* that ~A for~] ~A."
                      (description condition)
                      (slot-value condition 'method)))))
