@@ -5,6 +5,9 @@
   (pushnew :qpq-postcondition-checks *features*)
   (pushnew :qpq-invariant-checks *features*))
 
+(defparameter %results ()
+  "Holds a list of values, accessed by the RESULTS function.")
+
 (defun results ()
   "This is really only available to :ENSURE methods. It returns the values
    returned by the primary/around method, so they can be checked in the
@@ -67,7 +70,6 @@
 	   #+:qpq-postcondition-checks
 	   (post-form (if (and postcondition-check postcondition)
                           `(let ((%results (multiple-value-list ,pre-form)))
-                             (declare (special %results))
                              ,@(call-methods postcondition
                                              'postcondition-error
                                              :method (first primary))
