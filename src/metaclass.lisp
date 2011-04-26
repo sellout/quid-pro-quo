@@ -46,32 +46,11 @@
     (declare (ignore class))
     nil))
 
-(defun check-effective-invariants (object)
-  (loop for invariant in (effective-class-invariants (class-of object))
-     for description in (effective-class-invariant-descriptions
-                         (class-of object))
-     unless (funcall invariant object)
-     do (error 'creation-invariant-error
-               :object object
-               :description (or (documentation invariant 'function)
-                                description))))
-
 (defun passes-class-invariants-p (object)
   (loop for invariant in (effective-class-invariants (class-of object))
      if (not (funcall invariant object))
      return nil
      finally (return t)))
-
-(defun check-slot-type-invariants (object)
-  (loop for slot in (class-slots (class-of object))
-     unless (typep (slot-value object (slot-definition-name slot))
-                   (slot-definition-type slot))
-     do (error 'creation-invariant-error
-               :object object
-               :description (format nil "Slot ~A of ~A must be of type ~A"
-                                    (slot-definition-name slot)
-                                    object
-                                    (slot-definition-type slot)))))
 
 (defun passes-slot-type-invariants-p (object)
   (loop for slot in (class-slots (class-of object))
@@ -135,9 +114,12 @@
         (slot-value instance 'invariant-descriptions)
         (mapcar #'cddr invariants)))
 
-(defmethod make-instance ((class contracted-class) &rest initargs)
-  (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
-  (let ((object (call-next-method)))
-    (check-slot-type-invariants object)
-    (check-effective-invariants object)
-    object))
+;; NOTE: Ideally this would be an invariant on MAKE-INSTANCE, but that would
+;;       also get checked _before_ creation. So instead, we make it a
+;;       postcondition, but special-case it in the method-combination to error
+;;       as an invariant.
+(defgeneric make-instance (class &rest initargs)
+  (:method-combination contract)
+  (:method :ensure ((class contracted-class) &rest initargs)
+    (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
+    (passes-invariants-p (results))))

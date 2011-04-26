@@ -12,7 +12,7 @@
   :components ((:file "package")
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
-               (:file "metaclass" :depends-on ("package")))
+               (:file "metaclass" :depends-on ("method-combination")))
   :in-order-to ((test-op (load-op quid-pro-quo-tests)))
   :perform (test-op :after (op c)
                     (funcall (intern "RUN!" :quid-pro-quo-test)
