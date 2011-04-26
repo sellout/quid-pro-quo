@@ -2,7 +2,25 @@
 
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
-               :reader direct-class-invariants)))
+               :reader direct-class-invariants)
+   (invariant-descriptions :initform ())))
+
+(defmethod documentation ((x contracted-class) (doc-type (eql 'type)))
+  "Appends the invariant information to the usual documentation."
+  (format nil "~@[~A~]~@[~&contract:~{~&* ~A~}~]"
+          (call-next-method)
+          (append (loop for slot in (class-slots x)
+                     unless (eq (slot-definition-type slot) t)
+                     collect (format nil "~A is of type ~A"
+                                     (slot-definition-name slot)
+                                     (slot-definition-type slot)))
+                  (mapcar (lambda (function body)
+                            (or (documentation function t) body))
+                          (effective-class-invariants x)
+                          (effective-class-invariant-descriptions x)))))
+
+(defmethod documentation ((x contracted-class) (doc-type (eql 't)))
+  (documentation x 'type))
 
 (defmethod validate-superclass
     ((class contracted-class) (superclass standard-class))
@@ -18,12 +36,25 @@
     (declare (ignore class))
     nil))
 
+(defgeneric effective-class-invariant-descriptions (class)
+  (:method ((class contracted-class))
+    (apply #'append
+           (slot-value class 'invariant-descriptions)
+           (mapcar #'effective-class-invariant-descriptions
+                   (class-direct-superclasses class))))
+  (:method (class)
+    (declare (ignore class))
+    nil))
+
 (defun check-effective-invariants (object)
   (loop for invariant in (effective-class-invariants (class-of object))
+     for description in (effective-class-invariant-descriptions
+                         (class-of object))
      unless (funcall invariant object)
      do (error 'creation-invariant-error
                :object object
-               :description (documentation invariant 'function))))
+               :description (or (documentation invariant 'function)
+                                description))))
 
 (defun passes-class-invariants-p (object)
   (loop for invariant in (effective-class-invariants (class-of object))
@@ -89,7 +120,9 @@
 
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
-  (setf (slot-value instance 'invariants) (mapcar #'eval invariants))
+  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
+        (slot-value instance 'invariant-descriptions)
+        (mapcar #'cddr invariants))
   (let ((slots (all-direct-slots instance)))
     (mapc (lambda (reader) (add-reader-invariant reader instance))
           (reduce #'append (mapcar #'slot-definition-readers slots)))
@@ -98,7 +131,9 @@
 
 (defmethod reinitialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
-  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)))
+  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
+        (slot-value instance 'invariant-descriptions)
+        (mapcar #'cddr invariants)))
 
 (defmethod make-instance ((class contracted-class) &rest initargs)
   (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
