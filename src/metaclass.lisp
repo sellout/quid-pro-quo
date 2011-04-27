@@ -126,8 +126,9 @@
 ;;       also get checked _before_ creation. So instead, we make it a
 ;;       postcondition, but special-case it in the method-combination to error
 ;;       as an invariant.
-(defgeneric make-instance (class &rest initargs)
-  (:method-combination contract)
-  (:method :ensure ((class contracted-class) &rest initargs)
-    (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
-    (passes-invariants-p (results))))
+
+(ensure-generic-function 'make-instance :method-combination '(contract))
+
+(defmethod make-instance :ensure ((class contracted-class) &rest initargs)
+  (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
+  (passes-invariants-p (results)))
