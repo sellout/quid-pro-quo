@@ -96,16 +96,25 @@
          (class-direct-slots class)
          (mapcar #'all-direct-slots (class-direct-superclasses class))))
 
+(defun add-accessor-invariants (class)
+  (let ((slots (all-direct-slots class)))
+    (mapc (lambda (reader) (add-reader-invariant reader class))
+          (reduce #'append (mapcar #'slot-definition-readers slots)))
+    (mapc (lambda (writer) (add-writer-invariant writer class))
+          (reduce #'append (mapcar #'slot-definition-writers slots)))))
+
+(defvar *invariant-initializers* (list #'add-accessor-invariants)
+  "This is a list of functions that add invariants to some methods on a class.
+   Each function must take the class as an argument. The return value is
+   ignored.")
+
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
   (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
         (slot-value instance 'invariant-descriptions)
         (mapcar #'cddr invariants))
-  (let ((slots (all-direct-slots instance)))
-    (mapc (lambda (reader) (add-reader-invariant reader instance))
-          (reduce #'append (mapcar #'slot-definition-readers slots)))
-    (mapc (lambda (writer) (add-writer-invariant writer instance))
-          (reduce #'append (mapcar #'slot-definition-writers slots)))))
+  (mapc (lambda (function) (funcall function instance))
+        *invariant-initializers*))
 
 (defmethod reinitialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)

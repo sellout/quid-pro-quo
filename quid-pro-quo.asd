@@ -7,12 +7,16 @@
   :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
-  :depends-on (closer-mop)
+  :depends-on (closer-mop asdf-system-connections)
   :pathname "src/"
   :components ((:file "package")
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
-               (:file "metaclass" :depends-on ("method-combination")))
+               (:file "metaclass" :depends-on ("method-combination"))
+               (:file "system-connections" :depends-on ("metaclass")
+                      :description "Enumerates conditionally-loaded files. Look
+                                    here for the other files that may be loaded
+                                    with this system."))
   :in-order-to ((test-op (load-op quid-pro-quo-tests)))
   :perform (test-op :after (op c)
                     (funcall (intern "RUN!" :quid-pro-quo-test)
