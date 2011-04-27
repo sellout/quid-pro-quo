@@ -19,8 +19,8 @@
 (define-method-combination contract
     (&key (precondition-check t) (postcondition-check t) (invariant-check t))
   ((precondition (:require . *))
-   (around (:around))
    (invariant (invariant . *))
+   (around (:around))
    (before (:before))
    (primary () :required t)
    (after (:after))
