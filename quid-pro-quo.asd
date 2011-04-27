@@ -1,7 +1,7 @@
-(defpackage quid-pro-quo-system
+(defpackage quid-pro-quo.system
   (:use #:cl #:asdf))
 
-(in-package #:quid-pro-quo-system)
+(in-package #:quid-pro-quo.system)
 
 (defsystem quid-pro-quo
   :author "Matthias Hoelzl <tc@gauss.muc.de>"
