@@ -16,8 +16,8 @@
                                      (slot-definition-type slot)))
                   (mapcar (lambda (function body)
                             (or (documentation function t) body))
-                          (effective-class-invariants x)
-                          (effective-class-invariant-descriptions x)))))
+                          (class-invariants x)
+                          (class-invariant-descriptions x)))))
 
 (defmethod documentation ((x contracted-class) (doc-type (eql 't)))
   (documentation x 'type))
@@ -26,28 +26,27 @@
     ((class contracted-class) (superclass standard-class))
   t)
 
-(defgeneric effective-class-invariants (class)
+(defgeneric class-invariants (class)
   (:method ((class contracted-class))
     (apply #'append
            (direct-class-invariants class)
-           (mapcar #'effective-class-invariants
-                   (class-direct-superclasses class))))
+           (mapcar #'class-invariants (class-direct-superclasses class))))
   (:method (class)
     (declare (ignore class))
     nil))
 
-(defgeneric effective-class-invariant-descriptions (class)
+(defgeneric class-invariant-descriptions (class)
   (:method ((class contracted-class))
     (apply #'append
            (slot-value class 'invariant-descriptions)
-           (mapcar #'effective-class-invariant-descriptions
+           (mapcar #'class-invariant-descriptions
                    (class-direct-superclasses class))))
   (:method (class)
     (declare (ignore class))
     nil))
 
 (defun passes-class-invariants-p (object)
-  (loop for invariant in (effective-class-invariants (class-of object))
+  (loop for invariant in (class-invariants (class-of object))
      if (not (funcall invariant object))
      return nil
      finally (return t)))
