@@ -14,6 +14,23 @@
    postcondition."
   (values-list %results))
 
+(defparameter *preparing-postconditions* nil
+  "This is true when we are setting up postconditions by pre-evaluating any
+   forms that need an OLD value.")
+
+(defparameter *postcondition-values* ()
+  "This contains all the values computed for the current set of postconditions")
+
+(defmacro old (expression)
+  "Only available in postconditions, OLD retrieves the value of an expression
+   that was calculated prior to the execution of the method."
+  (let ((value (gensym)))
+    `(if *preparing-postconditions*
+         (let ((,value ,expression))
+           (push ,value *postcondition-values*)
+           ,value)
+         (pop *postcondition-values*))))
+
 (defparameter *inside-contract-p* nil)
 
 (define-method-combination contract
@@ -41,7 +58,11 @@
                                      ,(second (method-qualifiers method))
                                      ,@condition-parameters))
                            `(call-method ,method)))
-                     methods)))
+                     methods))
+           (prepare-postconditions (methods)
+             (mapcar (lambda (method)
+                       `(ignore-errors (call-method ,method)))
+                     (reverse methods))))
     (let* ((form (if (or before after (rest primary))
                      `(multiple-value-prog1
                           (progn ,@(call-methods before)
@@ -83,18 +104,26 @@
            (post-form (if (and postcondition-check
                                postcondition
                                (not *inside-contract-p*))
-                          `(let ((%results (multiple-value-list ,pre-form))
-                                 (*inside-contract-p* t))
-                             ,@(apply #'call-methods
-                                      postcondition
-                                      (if (eq (method-generic-function
-                                               (first primary))
-                                              #'make-instance)
+                          `(progn
+                             (unless ,(find (method-generic-function
+                                             (first primary))
+                                            (list #'make-instance
+                                                  #'initialize-instance))
+                               (let ((*preparing-postconditions* t)
+                                     (*inside-contract-p* t))
+                                 ,@(prepare-postconditions postcondition)))
+                             (let ((%results (multiple-value-list ,pre-form))
+                                   (*inside-contract-p* t))
+                               ,@(apply #'call-methods
+                                        postcondition
+                                        (if (eq (method-generic-function
+                                                 (first primary))
+                                                #'make-instance)
                                           (list 'creation-invariant-error
                                                 :object reader-object)
-                                          (list 'postcondition-error
-                                                :method (first primary))))
-                            (results))
+                                            (list 'postcondition-error
+                                                  :method (first primary))))
+                               (results)))
                           pre-form))
            #-:qpq-postcondition-checks
            (post-form pre-form)
