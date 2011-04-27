@@ -43,17 +43,17 @@
                            `(call-method ,method)))
                      methods)))
     (let* ((form (if (or before after (rest primary))
-		     `(multiple-value-prog1
+                     `(multiple-value-prog1
                           (progn ,@(call-methods before)
                                  (call-method ,(first primary) ,(rest primary)))
                         ,@(call-methods (reverse after)))
                      `(call-method ,(first primary) ,(rest primary))))
-	   (around-form (if around
+           (around-form (if around
                             `(call-method ,(first around)
                                           (,@(rest around) (make-method ,form)))
                             form))
-	   #+:qpq-precondition-checks
-	   (pre-form (if (and precondition-check
+           #+:qpq-precondition-checks
+           (pre-form (if (and precondition-check
                               precondition
                               (not *inside-contract-p*))
                          `(let* ((contract-results
@@ -77,10 +77,10 @@
                                        :method ,(first primary))))
                             ,around-form)
                          around-form))
-	   #-:qpq-precondition-checks
-	   (pre-form around-form)
-	   #+:qpq-postcondition-checks
-	   (post-form (if (and postcondition-check
+           #-:qpq-precondition-checks
+           (pre-form around-form)
+           #+:qpq-postcondition-checks
+           (post-form (if (and postcondition-check
                                postcondition
                                (not *inside-contract-p*))
                           `(let ((%results (multiple-value-list ,pre-form))
@@ -96,10 +96,10 @@
                                                 :method (first primary))))
                             (results))
                           pre-form))
-	   #-:qpq-postcondition-checks
-	   (post-form pre-form)
-	   #+:qpq-invariant-checks
-	   (inv-form (if (and invariant-check
+           #-:qpq-postcondition-checks
+           (post-form pre-form)
+           #+:qpq-invariant-checks
+           (inv-form (if (and invariant-check
                               invariant
                               (not *inside-contract-p*))
                          `(multiple-value-prog1
@@ -118,6 +118,6 @@
                                                           reader-object)
                                               :method (first primary))))
                          post-form))
-	   #-:qpq-invariant-checks
-	   (inv-form post-form))
+           #-:qpq-invariant-checks
+           (inv-form post-form))
       inv-form)))

@@ -33,28 +33,28 @@
 (define-condition before-invariant-error (invariant-error)
   ((method :initarg :method))
   (:report (lambda (condition stream)
-	     (format stream
+             (format stream
                      "Invariant violation ~@[on ~A ~]before ~A~@[: ~A~]."
                      (object condition)
                      (slot-value condition 'method)
-		     (description condition)))))
+                     (description condition)))))
 
 (define-condition after-invariant-error (invariant-error)
   ((method :initarg :method))
   (:report (lambda (condition stream)
-	     (format stream
+             (format stream
                      "Invariant violation ~@[on ~A ~]after ~A~@[: ~A~]."
                      (object condition)
                      (slot-value condition 'method)
-		     (description condition)))))
+                     (description condition)))))
 
 (define-condition creation-invariant-error (invariant-error)
   ()
   (:report (lambda (condition stream)
-	     (format stream
+             (format stream
                      "Invariant violation upon creation of ~A~@[: ~A~]."
                      (object condition)
-		     (description condition)))))
+                     (description condition)))))
 
 (define-condition malformed-contract-warning (warning)
   ((method :initarg :method)

@@ -82,23 +82,23 @@
 
 (let* ((my-foo (make-instance 'foo))
        (a-slot (progn (format t " !! Accessing my-slot.~%")
-		      (my-slot my-foo))))
+                      (my-slot my-foo))))
   (setf (my-slot my-foo) (progn (format t " !! Setting my-slot.~%")
-				9999))
+                                9999))
   (list (my-slot my-foo) a-slot (your-slot my-foo)))
 
 (let* ((my-bar (make-instance 'bar))
        (a-slot (progn (format t " !! Accessing my-slot.~%")
-		      (my-slot my-bar))))
+                      (my-slot my-bar))))
   (setf (my-slot my-bar) (progn (format t " !! Setting my-slot.~%")
-				9999))
+                                9999))
   (list (my-slot my-bar) a-slot (your-slot my-bar)))
 
 (let* ((my-bar-2 (make-instance 'bar-2))
        (a-slot (progn (format t " !! Accessing my-slot.~%")
-		      (my-slot my-bar-2))))
+                      (my-slot my-bar-2))))
   (setf (my-slot my-bar-2) (progn (format t " !! Setting my-slot.~%")
-				9999))
+                                9999))
   (list (my-slot my-bar-2) a-slot (your-slot my-bar-2)))
 
 (my-slot (make-instance 'bar))
@@ -120,7 +120,7 @@
 
 (defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
-		 :initform nil))
+                 :initform nil))
   (:metaclass contracted-class)
   (:invariants (lambda (instance)
                  "Test-2 invariant"
