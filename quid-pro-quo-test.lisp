@@ -39,6 +39,11 @@
   (signals overly-strict-precondition-warning
     (test-qpq 12345678900987654321 100)))
 
+(test should-not-warn-overly-strict-precondition
+  (with-contracts-enabled (:invariants t :preconditions nil :postconditions t)
+    (is (equal (list 12345678900987654321 100)
+               (test-qpq 12345678900987654321 100)))))
+
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
 
@@ -46,11 +51,21 @@
   (signals precondition-error
     (test-qpq 1 12345678900987654321)))
 
+(test should-not-fail-n-<-100-precondition
+  (with-contracts-enabled (:preconditions nil)
+    (is (equal (list 1 12345678900987654321)
+               (test-qpq 1 12345678900987654321)))))
+
 (test should-fail-result-postcondition
   (signals postcondition-error
     (test-qpq most-positive-fixnum most-positive-fixnum)))
 
-(defclass foo () 
+(test should-not-fail-result-postcondition
+  (with-contracts-disabled ()
+    (is (equal (list most-positive-fixnum most-positive-fixnum)
+               (test-qpq most-positive-fixnum most-positive-fixnum)))))
+
+(defclass foo ()
   ((my-slot :accessor my-slot :initform nil)
    (your-slot :accessor your-slot :initform t))
   (:metaclass contracted-class)

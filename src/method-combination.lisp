@@ -5,6 +5,51 @@
   (pushnew :qpq-postcondition-checks *features*)
   (pushnew :qpq-invariant-checks *features*))
 
+(defvar *check-invariants-p* t)
+(defvar *check-preconditions-p* t)
+(defvar *check-postconditions-p* t)
+
+(defun enabled-contracts ()
+  "Returns a list of arguments suitable to APPLYing to ENABLE-CONTRACTS."
+  (list :invariants *check-invariants-p*
+        :preconditions *check-preconditions-p*
+        :postconditions *check-postconditions-p*))
+
+(defun enable-contracts
+    (&key (invariants nil invp)
+          (preconditions nil prep)
+          (postconditions nil postp))
+  "Enables or disables each contract type that is provided. If none is provided,
+   no change is made."
+  (when invp (setf *check-invariants-p* invariants))
+  (when prep (setf *check-preconditions-p* preconditions))
+  (when postp (setf *check-postconditions-p* postconditions)))
+
+(defun disable-contracts ()
+  "A shorthand for disabling all contracts."
+  (enable-contracts :invariants nil :preconditions nil :postconditions nil))
+
+(defmacro with-contracts-enabled
+    ((&rest args &key invariants preconditions postconditions) &body body)
+  "Enables/disables contracts for the extent of this form, restoring them to
+   their prior values upon exit."
+  (declare (ignore invariants preconditions postconditions))
+  (let ((enabled-contracts (gensym "ENABLED-CONTRACTS-")))
+    `(let ((,enabled-contracts (enabled-contracts)))
+       (unwind-protect
+            (progn (enable-contracts ,@args)
+                   ,@body)
+         (apply #'enable-contracts ,enabled-contracts)))))
+
+(defmacro with-contracts-disabled (() &body body)
+  "A shorthand for disabling all contracts for the extent of this form."
+  (let ((enabled-contracts (gensym "ENABLED-CONTRACTS-")))
+    `(let ((,enabled-contracts (enabled-contracts)))
+       (unwind-protect
+            (progn (disable-contracts)
+                   ,@body)
+         (apply #'enable-contracts ,enabled-contracts)))))
+
 (defparameter %results ()
   "Holds a list of values, accessed by the RESULTS function.")
 
@@ -34,9 +79,11 @@
 (defparameter *inside-contract-p* nil)
 
 (define-method-combination contract
-    (&key (precondition-check t) (postcondition-check t) (invariant-check t))
-  ((precondition (:require . *))
-   (invariant (invariant . *))
+    (&key (invariant-check *check-invariants-p*)
+          (precondition-check *check-preconditions-p*)
+          (postcondition-check *check-postconditions-p*))
+  ((invariant (invariant . *))
+   (precondition (:require . *))
    (around (:around))
    (before (:before))
    (primary () :required t)
@@ -78,25 +125,27 @@
            (pre-form (if (and precondition-check
                               precondition
                               (not *inside-contract-p*))
-                         `(let* ((contract-results
-                                  (let ((*inside-contract-p* t))
-                                    (list ,@(call-methods precondition))))
-                                 (first-failure (position-if #'null
-                                                             contract-results))
-                                 (last-success (position-if-not #'null
-                                                                contract-results
-                                                                :from-end t)))
-                            (when first-failure
-                              (when (and last-success
-                                         (< first-failure last-success))
-                                (warn 'overly-strict-precondition-warning
-                                      :method ,(first primary)))
-                              (when (= first-failure 0)
-                                (error 'precondition-error
-                                       :description ,(second
-                                                      (method-qualifiers
-                                                       (first precondition)))
-                                       :method ,(first primary))))
+                         `(progn
+                            (when *check-preconditions-p*
+                              (let* ((contract-results
+                                      (let ((*inside-contract-p* t))
+                                        (list ,@(call-methods precondition))))
+                                     (first-failure (position-if #'null
+                                                                 contract-results))
+                                     (last-success (position-if-not #'null
+                                                                    contract-results
+                                                                    :from-end t)))
+                                (when first-failure
+                                  (when (and last-success
+                                             (< first-failure last-success))
+                                    (warn 'overly-strict-precondition-warning
+                                          :method ,(first primary)))
+                                  (when (= first-failure 0)
+                                    (error 'precondition-error
+                                           :description ,(second
+                                                          (method-qualifiers
+                                                           (first precondition)))
+                                           :method ,(first primary))))))
                             ,around-form)
                          around-form))
            #-:qpq-precondition-checks
@@ -105,23 +154,25 @@
            (post-form (if (and postcondition-check
                                postcondition
                                (not *inside-contract-p*))
-                          `(progn
-                             (unless ,(find gf
-                                            (list #'make-instance
-                                                  #'initialize-instance))
-                               (let ((*preparing-postconditions* t)
-                                     (*inside-contract-p* t))
-                                 ,@(prepare-postconditions postcondition)))
-                             (let ((%results (multiple-value-list ,pre-form))
-                                   (*inside-contract-p* t))
-                               ,@(apply #'call-methods
-                                        postcondition
-                                        (if (eq gf #'make-instance)
-                                          (list 'creation-invariant-error
-                                                :object reader-object)
-                                            (list 'postcondition-error
-                                                  :method (first primary))))
-                               (results)))
+                          `(if *check-postconditions-p*
+                               (progn
+                                 (unless ,(find gf
+                                                (list #'make-instance
+                                                      #'initialize-instance))
+                                   (let ((*preparing-postconditions* t)
+                                         (*inside-contract-p* t))
+                                     ,@(prepare-postconditions postcondition)))
+                                 (let ((%results (multiple-value-list ,pre-form))
+                                       (*inside-contract-p* t))
+                                   ,@(apply #'call-methods
+                                            postcondition
+                                            (if (eq gf #'make-instance)
+                                                (list 'creation-invariant-error
+                                                      :object reader-object)
+                                                (list 'postcondition-error
+                                                      :method (first primary))))
+                                   (results)))
+                               ,pre-form)
                           pre-form))
            #-:qpq-postcondition-checks
            (post-form pre-form)
@@ -129,21 +180,23 @@
            (inv-form (if (and invariant-check
                               invariant
                               (not *inside-contract-p*))
-                         `(multiple-value-prog1
-                              (progn
+                         `(if *check-invariants-p*
+                              (multiple-value-prog1
+                                  (progn
+                                    (let ((*inside-contract-p* t))
+                                      ,@(call-methods invariant
+                                                      'before-invariant-error
+                                                      :object (or writer-object
+                                                                  reader-object)
+                                                      :method (first primary)))
+                                    ,post-form)
                                 (let ((*inside-contract-p* t))
                                   ,@(call-methods invariant
-                                                  'before-invariant-error
+                                                  'after-invariant-error
                                                   :object (or writer-object
                                                               reader-object)
-                                                  :method (first primary)))
-                                ,post-form)
-                            (let ((*inside-contract-p* t))
-                              ,@(call-methods invariant
-                                              'after-invariant-error
-                                              :object (or writer-object
-                                                          reader-object)
-                                              :method (first primary))))
+                                                  :method (first primary))))
+                              ,post-form)
                          post-form))
            #-:qpq-invariant-checks
            (inv-form post-form))
