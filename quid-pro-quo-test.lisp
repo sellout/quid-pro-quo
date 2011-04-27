@@ -143,8 +143,8 @@
                     4))))
 
 (test should-fail-invariant-after-writer
-  ;(signals after-invariant-error)
-  (setf (my-slot (make-instance 'test-1)) 5))
+  (signals after-invariant-error
+    (setf (my-slot (make-instance 'test-1)) 5)))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
