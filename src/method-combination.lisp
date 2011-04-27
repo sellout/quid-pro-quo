@@ -48,6 +48,7 @@
   ;;       the first (and only). So here we grab the first two, and if it's a
   ;;       reader, WRITER-OBJECT will be nil.
   (:arguments reader-object writer-object)
+  (:generic-function gf)
   (labels ((call-methods
                (methods &optional error-type &rest condition-parameters)
              (mapcar (lambda (method)
@@ -105,8 +106,7 @@
                                postcondition
                                (not *inside-contract-p*))
                           `(progn
-                             (unless ,(find (method-generic-function
-                                             (first primary))
+                             (unless ,(find gf
                                             (list #'make-instance
                                                   #'initialize-instance))
                                (let ((*preparing-postconditions* t)
@@ -116,9 +116,7 @@
                                    (*inside-contract-p* t))
                                ,@(apply #'call-methods
                                         postcondition
-                                        (if (eq (method-generic-function
-                                                 (first primary))
-                                                #'make-instance)
+                                        (if (eq gf #'make-instance)
                                           (list 'creation-invariant-error
                                                 :object reader-object)
                                             (list 'postcondition-error
