@@ -25,6 +25,12 @@
    (primary () :required t)
    (after (:after))
    (postcondition (:ensure . *)))
+  ;; NOTE: This gives us access to the object for invariant errors. Invariants
+  ;;       only exist on readers, writers, and MAKE-INSTANCE. For writers, the
+  ;;       object we care about is the second argument, in the other cases it's
+  ;;       the first (and only). So here we grab the first two, and if it's a
+  ;;       reader, WRITER-OBJECT will be nil.
+  (:arguments reader-object writer-object)
   (labels ((call-methods
                (methods &optional error-type &rest condition-parameters)
              (mapcar (lambda (method)
@@ -84,7 +90,8 @@
                                       (if (eq (method-generic-function
                                                (first primary))
                                               #'make-instance)
-                                          (list 'creation-invariant-error)
+                                          (list 'creation-invariant-error
+                                                :object reader-object)
                                           (list 'postcondition-error
                                                 :method (first primary))))
                             (results))
@@ -100,11 +107,15 @@
                                 (let ((*inside-contract-p* t))
                                   ,@(call-methods invariant
                                                   'before-invariant-error
+                                                  :object (or writer-object
+                                                              reader-object)
                                                   :method (first primary)))
                                 ,post-form)
                             (let ((*inside-contract-p* t))
                               ,@(call-methods invariant
                                               'after-invariant-error
+                                              :object (or writer-object
+                                                          reader-object)
                                               :method (first primary))))
                          post-form))
 	   #-:qpq-invariant-checks
