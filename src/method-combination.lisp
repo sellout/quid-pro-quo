@@ -96,10 +96,11 @@
                               invariant
                               (not *inside-contract-p*))
                          `(multiple-value-prog1
-                              (let ((*inside-contract-p* t))
-                                ,@(call-methods invariant
-                                                'before-invariant-error
-                                                :method (first primary))
+                              (progn
+                                (let ((*inside-contract-p* t))
+                                  ,@(call-methods invariant
+                                                  'before-invariant-error
+                                                  :method (first primary)))
                                 ,post-form)
                             (let ((*inside-contract-p* t))
                               ,@(call-methods invariant
