@@ -184,17 +184,18 @@
                               (multiple-value-prog1
                                   (progn
                                     (let ((*inside-contract-p* t))
-                                      ,@(call-methods invariant
-                                                      'before-invariant-error
-                                                      :object (or writer-object
-                                                                  reader-object)
-                                                      :method (first primary)))
+                                      ,@(call-methods
+                                         invariant
+                                         'before-invariant-error
+                                         :object `(or ,writer-object
+                                                      ,reader-object)
+                                         :method (first primary)))
                                     ,post-form)
                                 (let ((*inside-contract-p* t))
                                   ,@(call-methods invariant
                                                   'after-invariant-error
-                                                  :object (or writer-object
-                                                              reader-object)
+                                                  :object `(or ,writer-object
+                                                               ,reader-object)
                                                   :method (first primary))))
                               ,post-form)
                          post-form))
