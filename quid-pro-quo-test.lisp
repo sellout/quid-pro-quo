@@ -113,7 +113,10 @@
   (:metaclass contracted-class)
   (:invariants (lambda (instance)
                  "Invariant of test"
-                 (numberp (slot-value instance 'my-slot)))))
+                 (numberp (slot-value instance 'my-slot)))
+               (lambda (instance)
+                 (< (slot-value instance 'my-slot)
+                    4))))
 
 (defclass test-2 (test-1)
   ((another-slot :accessor another-slot :initarg :another-slot
@@ -123,6 +126,10 @@
                  "Test-2 invariant"
                  (< (length (slot-value instance 'another-slot))
                     4))))
+
+(test should-fail-invariant-after-writer
+  (signals after-invariant-error
+    (setf (my-slot (make-instance 'test-1)) 5)))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
