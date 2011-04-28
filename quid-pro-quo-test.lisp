@@ -1,5 +1,5 @@
 (defpackage quid-pro-quo-test
-  (:use #:quid-pro-quo #:cl #:fiveam)
+  (:use #:quid-pro-quo #:closer-common-lisp #:closer-mop #:fiveam)
   (:export #:test-qpq))
 
 (in-package #:quid-pro-quo-test)
@@ -44,6 +44,14 @@
     (is (equal (list 12345678900987654321 100)
                (test-qpq 12345678900987654321 100)))))
 
+(test should-have-correct-method-in-warning
+  (handler-case
+      (progn
+        (test-qpq 12345678900987654321 100)
+        (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
+    (overly-strict-precondition-warning (c)
+      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
+
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
 
@@ -56,6 +64,14 @@
     (is (equal (list 1 12345678900987654321)
                (test-qpq 1 12345678900987654321)))))
 
+(test should-have-correct-method-in-precondition-error
+  (handler-case
+      (progn
+        (test-qpq 1 12345678900987654321)
+        (fail "Failed to signal PRECONDITION-ERROR."))
+    (precondition-error (c)
+      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
+
 (test should-fail-result-postcondition
   (signals postcondition-error
     (test-qpq most-positive-fixnum most-positive-fixnum)))
@@ -64,6 +80,14 @@
   (with-contracts-disabled ()
     (is (equal (list most-positive-fixnum most-positive-fixnum)
                (test-qpq most-positive-fixnum most-positive-fixnum)))))
+
+(test should-have-correct-method-in-postcondition-error
+  (handler-case
+      (progn
+        (test-qpq most-positive-fixnum most-positive-fixnum)
+        (fail "Failed to signal POSTCONDITION-ERROR."))
+    (postcondition-error (c)
+      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
 
 (defclass foo ()
   ((my-slot :accessor my-slot :initform nil)
@@ -145,6 +169,22 @@
 (test should-fail-invariant-after-writer
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-1)) 5)))
+
+(test should-not-fail-invariant-after-writer
+  (with-contracts-enabled (:invariants nil)
+    (let ((test (make-instance 'test-1)))
+      (setf (my-slot test) 5)
+      (is (= 5 (my-slot test))))))
+
+(test should-have-correct-values-in-invariant-error
+  (let ((test (make-instance 'test-1)))
+    (handler-case
+        (progn
+          (setf (my-slot test) 5)
+          (fail "Failed to signal AFTER-INVARIANT-ERROR."))
+      (after-invariant-error (c)
+        (is (eq #'(setf my-slot) (method-generic-function (qpq::method c))))
+        (is (eq test (qpq::object c)))))))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
