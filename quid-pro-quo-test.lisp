@@ -50,7 +50,8 @@
         (test-qpq 12345678900987654321 100)
         (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
     (overly-strict-precondition-warning (c)
-      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
+      (is (eq #'test-qpq
+              (method-generic-function (qpq::condition-method c)))))))
 
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
@@ -70,7 +71,8 @@
         (test-qpq 1 12345678900987654321)
         (fail "Failed to signal PRECONDITION-ERROR."))
     (precondition-error (c)
-      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
+      (is (eq #'test-qpq
+              (method-generic-function (qpq::condition-method c)))))))
 
 (test should-fail-result-postcondition
   (signals postcondition-error
@@ -87,7 +89,8 @@
         (test-qpq most-positive-fixnum most-positive-fixnum)
         (fail "Failed to signal POSTCONDITION-ERROR."))
     (postcondition-error (c)
-      (is (eq #'test-qpq (method-generic-function (qpq::method c)))))))
+      (is (eq #'test-qpq
+              (method-generic-function (qpq::condition-method c)))))))
 
 (defclass foo ()
   ((my-slot :accessor my-slot :initform nil)
@@ -183,7 +186,8 @@
           (setf (my-slot test) 5)
           (fail "Failed to signal AFTER-INVARIANT-ERROR."))
       (after-invariant-error (c)
-        (is (eq #'(setf my-slot) (method-generic-function (qpq::method c))))
+        (is (eq #'(setf my-slot)
+                (method-generic-function (qpq::condition-method c))))
         (is (eq test (qpq::object c)))))))
 
 (test should-fail-on-invariant-of-superclass
