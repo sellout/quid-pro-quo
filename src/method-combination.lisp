@@ -201,4 +201,11 @@
                          post-form))
            #-:qpq-invariant-checks
            (inv-form post-form))
-      inv-form)))
+      ;; NOTE: This LET form is a workaround because there's no way to specify
+      ;;       IGNORABLE in the right place, so we use the outer variables to
+      ;;       bind the inner ones, then we can declare the inner ones as
+      ;;       ignorable.
+      `(let ((reader-object reader-object)
+             (writer-object writer-object))
+         (declare (ignorable reader-object writer-object))
+         ,inv-form))))
