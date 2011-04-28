@@ -282,6 +282,12 @@
   (signals creation-invariant-error
     (make-instance 'contracted-subclass :foo 5)))
 
+(test should-fail-invariant-before-setf
+  (let ((instance (with-contracts-disabled ()
+                    (make-instance 'contracted-subclass :foo 5))))
+    (signals before-invariant-error
+      (setf (foo instance) 6))))
+
 (test should-fail-invariant-on-superclass-writer
   (let ((instance (make-instance 'contracted-subclass)))
     (signals after-invariant-error
