@@ -46,7 +46,7 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 Preconditions (`:require`) and postconditions (`:ensure`) are added to functions similarly to `:before` and `:after` methods.
 
-```common lisp
+```common-lisp
 (defmethod put :require "the stack is not full" (item (stack stack))
   (declare (ignore item))
   (not (full stack)))
@@ -61,7 +61,7 @@ This simple example illustrates a few things: an optional description of what is
 
 Invariants are placed on classes.
 
-```common lisp
+```common-lisp
 (defclass stack ()
   ((capacity :initarg :capacity :reader capacity :type integer)
    (count :initform 0 :reader count :type integer)
