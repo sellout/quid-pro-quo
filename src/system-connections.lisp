@@ -2,4 +2,4 @@
 
 (defsystem-connection quid-pro-quo.slot-value-invariants
   :requires (quid-pro-quo loom)
-  :components ((:file "slot-value-invariants")))
+  :components ((:file "loom-slot-value-invariants")))
