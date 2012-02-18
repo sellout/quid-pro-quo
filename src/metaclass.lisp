@@ -1,5 +1,9 @@
 (in-package #:quid-pro-quo)
 
+(defvar *contract-method-combination*
+  #-clisp '(contract)
+  #+clisp (clos::get-method-combination 'contract 'quid-pro-quo))
+
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
                :reader direct-class-invariants)
@@ -68,7 +72,7 @@
   (let* ((generic-function (ensure-generic-function
                             function-name
                             :lambda-list lambda-list
-                            :method-combination '(contract)))
+                            :method-combination *contract-method-combination*))
          (method-prototype (class-prototype (find-class 'standard-method)))
          (method-function (compile nil
                                    (make-method-lambda generic-function
@@ -129,7 +133,8 @@
 ;;       postcondition, but special-case it in the method-combination to error
 ;;       as an invariant.
 
-(ensure-generic-function 'make-instance :method-combination '(contract))
+(ensure-generic-function 'make-instance
+                         :method-combination *contract-method-combination*)
 
 (defmethod make-instance :ensure ((class contracted-class) &rest initargs)
   (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
