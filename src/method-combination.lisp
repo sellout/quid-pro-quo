@@ -67,8 +67,8 @@
   "This contains all the values computed for the current set of postconditions")
 
 (defmacro old (expression)
-  "Only available in postconditions, OLD retrieves the value of an expression
-   that was calculated prior to the execution of the method."
+  "Only available in postconditions, OLD evaluates its expression before the
+   primary method is executed and stores it for use in the postcondition."
   (let ((value (gensym)))
     `(if *preparing-postconditions*
          (let ((,value ,expression))

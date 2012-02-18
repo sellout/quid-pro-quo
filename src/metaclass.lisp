@@ -3,7 +3,9 @@
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
                :reader direct-class-invariants)
-   (invariant-descriptions :initform ())))
+   (invariant-descriptions :initform ()))
+  (:documentation
+   "Use this as the metaclass for any classes you want to add invariants to."))
 
 (defmethod documentation ((x contracted-class) (doc-type (eql 'type)))
   "Appends the invariant information to the usual documentation."

@@ -36,7 +36,7 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 * Allegro (both ansi & modern) – **YES**
 * CLISP – ?
 * Clozure – **YES**
-* CMUCL – currently errors
+* CMUCL – currently errors (22 pass, 7 fail)
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
 * LispWorks – currently errors
 * SBCL – **YES**
