@@ -41,3 +41,41 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 * LispWorks – currently errors
 * SBCL – **YES**
 * SCL – ?
+
+## Usage
+
+Preconditions (`:require`) and postconditions (`:ensure`) are added to functions similarly to `:before` and `:after` methods.
+
+```common lisp
+(defmethod put :require "the stack is not full" (item (stack stack))
+  (declare (ignore item))
+  (not (full stack)))
+
+(defmethod put :ensure (item (stack stack))
+  (and (not (empty stack))
+       (eq (top-item stack) item)
+       (= (count stack) (1+ (old (count stack))))))
+```
+
+This simple example illustrates a few things: an optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily available), and the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call.
+
+Invariants are placed on classes.
+
+```common lisp
+(defclass stack ()
+  ((capacity :initarg :capacity :reader capacity :type integer)
+   (count :initform 0 :reader count :type integer)
+   (top-item :reader top-item))
+  (:metaclass contracted-class)
+  (:invariants (lambda (instance)
+                 "the count must be between 0 and the capacity"
+                 (<= 0 (count instance) (capacity instance)))))
+```
+
+In order to have invariants on a class, the metaclass must be specified as `contracted-class`.
+
+Invariants are added to classes explicitly with the `:invariants` option, which allows you to specify any number of predicates that take the instance as their only argument. When available (depending on the Lisp implementation), the documentation string for the function is used. If no documentation is available, we fall back to the body (in the case of a lambda) or the function name as the description.
+
+Types are also checked as invariants. Most implementations check slot types little enough that it's possible for a bad value to end up there in some cases.
+
+The description (for `:require` and `:ensure`, as well as invariants) is included in the report if a `contract-violation-error` is raised. The description is also added to the documentation for the class, function, or method as appropriate. Slot type declarations are also added to the class documentation.
