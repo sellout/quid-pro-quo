@@ -1,8 +1,9 @@
 (in-package #:quid-pro-quo)
 
 (defvar *contract-method-combination*
-  #-clisp '(contract)
-  #+clisp (clos::get-method-combination 'contract 'quid-pro-quo))
+  #-(or clisp lispworks) '(contract)
+  #+clisp (clos::get-method-combination 'contract 'quid-pro-quo)
+  #+lispworks (clos::find-a-method-combination-type 'contract))
 
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
