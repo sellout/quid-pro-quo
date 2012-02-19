@@ -11,43 +11,42 @@
 (defgeneric test-qpq (arg1 arg2)
   (:method-combination contract :invariant-check nil)
 
-  (:method :require "first arg > 123" ((m fixnum) (n integer))
+  (:method :require "first arg > 123" ((m integer) (n number))
     (> m 123))
-  (:method :require "second arg < 100" ((m integer) (n fixnum))
+  (:method :require "second arg < 100" ((m number) (n integer))
     (< n 100))
-  (:method :require "first arg = 12345678900987654321"
-           ((m integer) (n integer))
-    (= m 12345678900987654321))
+  (:method :require "first arg = 12345678900987654321.0" ((m number) (n number))
+    (= m 12345678900987654321.0))
 
-  (:method :around ((m integer) (n integer))
+  (:method :around ((m number) (n number))
     (call-next-method))
-  (:method :before ((m integer) (n integer))
+  (:method :before ((m number) (n number))
     (list (- m 1) (- n 1)))
-  (:method ((m integer) (n integer))
+  (:method ((m number) (n number))
     (list m n))
-  (:method :after ((m integer) (n integer))
+  (:method :after ((m number) (n number))
     (list (+ m 1) (+ n 1)))
 
-  (:method :ensure "results are fixnum" ((m fixnum) (n fixnum))
+  (:method :ensure "results are fixnum" ((m integer) (n integer))
     (<= most-negative-fixnum (reduce #'+ (results)) most-positive-fixnum))
-  (:method :ensure "999" ((m integer) (n fixnum))
+  (:method :ensure "999" ((m number) (n integer))
     999)
-  (:method :ensure "always true" ((m integer) (n integer))
+  (:method :ensure "always true" ((m number) (n number))
     t))
 
 (test should-warn-overly-strict-precondition
   (signals overly-strict-precondition-warning
-    (test-qpq 12345678900987654321 100)))
+    (test-qpq 12345678900987654321.0 100)))
 
 (test should-not-warn-overly-strict-precondition
   (with-contracts-enabled (:invariants t :preconditions nil :postconditions t)
-    (is (equal (list 12345678900987654321 100)
-               (test-qpq 12345678900987654321 100)))))
+    (is (equal (list 12345678900987654321.0 100)
+               (test-qpq 12345678900987654321.0 100)))))
 
 (test should-have-correct-method-in-warning
   (handler-case
       (progn
-        (test-qpq 12345678900987654321 100)
+        (test-qpq 12345678900987654321.0 100)
         (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
     (overly-strict-precondition-warning (c)
       (is (eq #'test-qpq
@@ -58,17 +57,17 @@
 
 (test should-fail-n-<-100-precondition
   (signals precondition-error
-    (test-qpq 1 12345678900987654321)))
+    (test-qpq 1 12345678900987654321.0)))
 
 (test should-not-fail-n-<-100-precondition
   (with-contracts-enabled (:preconditions nil)
-    (is (equal (list 1 12345678900987654321)
-               (test-qpq 1 12345678900987654321)))))
+    (is (equal (list 1 12345678900987654321.0)
+               (test-qpq 1 12345678900987654321.0)))))
 
 (test should-have-correct-method-in-precondition-error
   (handler-case
       (progn
-        (test-qpq 1 12345678900987654321)
+        (test-qpq 1 12345678900987654321.0)
         (fail "Failed to signal PRECONDITION-ERROR."))
     (precondition-error (c)
       (is (eq #'test-qpq
