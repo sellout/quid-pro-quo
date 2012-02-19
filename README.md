@@ -55,11 +55,19 @@ Preconditions (`:require`) and postconditions (`:ensure`) are added to functions
   (and (not (empty stack))
        (eq (top-item stack) item)
        (= (count stack) (1+ (old (count stack))))))
+
+(defmethod pop-stack :ensure ((stack stack))
+  (and (not (full stack))
+       (eq (results) (old (top-item stack)))
+       (= (count stack) (1- (old (count stack)))))
 ```
 
-This simple example illustrates a few things: an optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily available), and the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call.
+This simple example illustrates a few things:
+* an optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily available),
+* the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call, and
+* the function `results` is available in postconditions which returns the same values returned by the primary method.
 
-Invariants are placed on classes.
+Invariants can be placed on classes.
 
 ```common-lisp
 (defclass stack ()
@@ -78,4 +86,4 @@ Invariants are added to classes explicitly with the `:invariants` option, which 
 
 Types are also checked as invariants. Most implementations check slot types little enough that it's possible for a bad value to end up there in some cases.
 
-The description (for `:require` and `:ensure`, as well as invariants) is included in the report if a `contract-violation-error` is raised. The description is also added to the documentation for the class, function, or method as appropriate. Slot type declarations are also added to the class documentation.
+The description (for `:require` and `:ensure`, as well as invariants) is included in the report if a `contract-violation-error` is raised. The description is also added to the documentation for the class, function, or primary method as appropriate. Slot type declarations are also added to the class documentation.
