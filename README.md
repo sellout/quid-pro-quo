@@ -34,11 +34,11 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 * ABCL – NO, because it’s not supported by Closer-MOP
 * Allegro (both ansi & modern) – **YES**
-* CLISP – it compiles, but the tests fail to compile
+* CLISP – currently fails tests (10 pass, 20 fail)
 * Clozure – **YES**
-* CMUCL – currently errors (22 pass, 7 fail)
+* CMUCL – currently fails tests (22 pass, 7 fail)
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
-* LispWorks – currently errors
+* LispWorks – currently fails tests
 * SBCL – **YES**
 * SCL – ?
 
