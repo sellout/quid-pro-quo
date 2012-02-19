@@ -77,12 +77,18 @@ Invariants can be placed on classes.
   (:metaclass contracted-class)
   (:invariants (lambda (instance)
                  "the count must be between 0 and the capacity"
-                 (<= 0 (count instance) (capacity instance)))))
+                 (<= 0 (count instance) (capacity instance)))
+               (lambda (instance)
+                 "there is no top-item if the stack is empty"
+                 (implies (empty instance)
+                          (not (slot-boundp instance 'top-item))))))
 ```
 
 In order to have invariants on a class, the metaclass must be specified as `contracted-class`.
 
-Invariants are added to classes explicitly with the `:invariants` option, which allows you to specify any number of predicates that take the instance as their only argument. When available (depending on the Lisp implementation), the documentation string for the function is used. If no documentation is available, we fall back to the body (in the case of a lambda) or the function name as the description.
+Invariants are added to classes explicitly with the `:invariants` option, which allows you to specify any number of predicates that take the instance as their only argument. When available (depending on the Lisp implementation), the documentation string for the function is used. If no documentation is available, we fall back to the body (in the case of a lambda) or the function name and its documentation as the description.
+
+This also illustrates another macro that is useful in contracts – `implies`. With `implies`, the second argument is only tested if the first argument is true.
 
 Types are also checked as invariants. Most implementations check slot types little enough that it's possible for a bad value to end up there in some cases.
 
