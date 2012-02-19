@@ -35,7 +35,7 @@
 (define-condition invariant-error (contract-violation-error)
   ((object :initform nil :reader object :initarg :object))
   (:report (lambda (condition stream)
-             (format stream "Invariant violation~@[ on ~A~]~@[: ~A~]."
+             (format stream "Invariant violation~@[ on ~A~]~@[:~& ~A~]."
                      (object condition) (description condition))))
   (:documentation
    "This error is signaled whenever an invariant fails. It is the class's
@@ -45,7 +45,7 @@
   ((method :reader condition-method :initarg :method))
   (:report (lambda (condition stream)
              (format stream
-                     "Invariant violation~@[ on ~A~] before ~A~@[: ~A~]."
+                     "Invariant violation~@[ on ~A~] before ~A~@[:~& ~A~]."
                      (object condition)
                      (condition-method condition)
                      (description condition))))
@@ -56,7 +56,7 @@
 (define-condition after-invariant-error (invariant-error)
   ((method :reader condition-method :initarg :method))
   (:report (lambda (condition stream)
-             (format stream "Invariant violation~@[ on ~A~] after ~A~@[: ~A~]."
+             (format stream "Invariant violation~@[ on ~A~] after ~A~@[:~& ~A~]."
                      (object condition)
                      (condition-method condition)
                      (description condition))))
@@ -68,7 +68,7 @@
   ()
   (:report (lambda (condition stream)
              (format stream
-                     "Invariant violation upon creation~@[ of ~A~]~@[: ~A~]."
+                     "Invariant violation upon creation~@[ of ~A~]~@[:~& ~A~]."
                      (object condition) (description condition))))
   (:documentation
    "This invariant-error is signaled when the invariant fails upon object

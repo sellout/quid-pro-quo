@@ -11,19 +11,20 @@
   (:documentation
    "Use this as the metaclass for any classes you want to add invariants to."))
 
+(defun invariant-description (class)
+  (let ((description (append (loop for slot in (class-slots class)
+                                unless (eq (slot-definition-type slot) t)
+                                collect (format nil "~A is of type ~A"
+                                                (slot-definition-name slot)
+                                                (slot-definition-type slot)))
+                             (class-invariant-descriptions class))))
+    (when description
+      (format nil "~{~&* ~A~}" description))))
+
 (defmethod documentation ((x contracted-class) (doc-type (eql 'type)))
   "Appends the invariant information to the usual documentation."
-  (format nil "~@[~A~]~@[~&contract:~{~&* ~A~}~]"
-          (call-next-method)
-          (append (loop for slot in (class-slots x)
-                     unless (eq (slot-definition-type slot) t)
-                     collect (format nil "~A is of type ~A"
-                                     (slot-definition-name slot)
-                                     (slot-definition-type slot)))
-                  (mapcar (lambda (function body)
-                            (or (documentation function t) body))
-                          (class-invariants x)
-                          (class-invariant-descriptions x)))))
+  (format nil "~@[~A~]~@[~&contract:~%~A~]"
+          (call-next-method) (invariant-description x)))
 
 (defmethod documentation ((x contracted-class) (doc-type (eql 't)))
   (documentation x 'type))
@@ -68,7 +69,13 @@
   (and (passes-slot-type-invariants-p object)
        (passes-class-invariants-p object)))
 
-(defun add-invariant (function-name lambda-list specializers lambda-body)
+;;; FIXME: (when description (list description)) should be in ADD-INVARIANT, not
+;;;        ADD-READER-INVARIANT and ADD-WRITER-INVARIANT. However, Closer-MOP
+;;;        currently breaks if we do that, so the current approach is fine until
+;;;        that's fixed.
+
+(defun add-invariant
+    (function-name description lambda-list specializers lambda-body)
   (let* ((generic-function (ensure-generic-function
                             function-name
                             :lambda-list lambda-list
@@ -82,20 +89,29 @@
                                                        nil))))
     (add-method generic-function
                 (make-instance 'standard-method
-                               :qualifiers '(invariant)
+                               :qualifiers (list 'invariant description)
                                :lambda-list lambda-list
                                :specializers specializers
                                :function method-function))))
 
 (defun add-reader-invariant (reader class)
-  (add-invariant reader '(object) (list class) '((passes-invariants-p object))))
+  (let ((description (invariant-description class)))
+    (add-invariant reader
+                   description
+                   '(object)
+                   (list class)
+                   `(,@(when description (list description))
+                       (passes-invariants-p object)))))
 
 (defun add-writer-invariant (writer class)
-  (add-invariant writer
-                 '(new-value object)
-                 (list (find-class t) class)
-                 '((declare (ignore new-value))
-                   (passes-invariants-p object))))
+  (let ((description (invariant-description class)))
+    (add-invariant writer
+                   description
+                   '(new-value object)
+                   (list (find-class t) class)
+                   `((declare (ignore new-value))
+                     ,@(when description (list description))
+                     (passes-invariants-p object)))))
 
 (defun all-direct-slots (class)
   (apply #'append
@@ -114,19 +130,40 @@
    Each function must take the class as an argument. The return value is
    ignored.")
 
+(defun initialize-invariants (instance invariants)
+  (labels ((create-description (body)
+             (if (and (listp (car body)) (eq 'declare (caar body)))
+                 (create-description (cdr body))
+                 (if (stringp (car body))
+                     (car body)
+                     body)))
+           (function-description (fn)
+             (format nil "~A~@[ (~A)~]" fn (documentation fn 'function))))
+    (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
+          (slot-value instance 'invariant-descriptions)
+          (mapcar (lambda (invariant)
+                    (typecase invariant
+                      (list (if (eq 'function (car invariant))
+                                (function-description (cadr invariant))
+                                (let ((body (cddr invariant)))
+                                  (create-description body))))
+                      ((or function symbol) (function-description invariant))))
+                  invariants))))
+
 (defmethod initialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
-  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
-        (slot-value instance 'invariant-descriptions)
-        (mapcar #'cddr invariants))
+  (initialize-invariants instance invariants))
+
+;; NOTE: This is done in MAKE-INSTANCE rather than INITIALIZE-INSTANCE because
+;;       the class needs to be finalized before we can loop over the slots.
+(defmethod make-instance :after
+    ((instance contracted-class) &key &allow-other-keys)
   (mapc (lambda (function) (funcall function instance))
         *invariant-initializers*))
 
 (defmethod reinitialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
-  (setf (slot-value instance 'invariants) (mapcar #'eval invariants)
-        (slot-value instance 'invariant-descriptions)
-        (mapcar #'cddr invariants)))
+  (initialize-invariants instance invariants))
 
 ;; NOTE: Ideally this would be an invariant on MAKE-INSTANCE, but that would
 ;;       also get checked _before_ creation. So instead, we make it a
@@ -137,5 +174,5 @@
                          :method-combination *contract-method-combination*)
 
 (defmethod make-instance :ensure ((class contracted-class) &rest initargs)
-  (declare (ignorable initargs)) ; NOTE: not ignorable, but CCL complains
+  (declare (ignore initargs))
   (passes-invariants-p (results)))

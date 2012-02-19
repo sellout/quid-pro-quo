@@ -101,10 +101,11 @@
              (mapcar (lambda (method)
                        (if error-type
                            `(unless (call-method ,method)
-                              (error ',error-type
-                                     :description
-                                     ,(second (method-qualifiers method))
-                                     ,@condition-parameters))
+                              ,(unless (getf condition-parameters :description)
+                                 (setf (getf condition-parameters :description)
+                                       (or (second (method-qualifiers method))
+                                           (documentation method t))))
+                              (error ',error-type ,@condition-parameters))
                            `(call-method ,method)))
                      methods))
            (prepare-postconditions (methods)
@@ -130,11 +131,13 @@
                               (let* ((contract-results
                                       (let ((*inside-contract-p* t))
                                         (list ,@(call-methods precondition))))
-                                     (first-failure (position-if #'null
-                                                                 contract-results))
-                                     (last-success (position-if-not #'null
-                                                                    contract-results
-                                                                    :from-end t)))
+                                     (first-failure (position-if
+                                                     #'null
+                                                     contract-results))
+                                     (last-success (position-if-not
+                                                    #'null
+                                                    contract-results
+                                                    :from-end t)))
                                 (when first-failure
                                   (when (and last-success
                                              (< first-failure last-success))
@@ -168,7 +171,10 @@
                                             postcondition
                                             (if (eq gf #'make-instance)
                                                 (list 'creation-invariant-error
-                                                      :object reader-object)
+                                                      :object reader-object
+                                                      :description
+                                                      `(invariant-description
+                                                        ,reader-object))
                                                 (list 'postcondition-error
                                                       :method (first primary))))
                                    (results)))
@@ -189,14 +195,22 @@
                                          'before-invariant-error
                                          :object `(or ,writer-object
                                                       ,reader-object)
-                                         :method (first primary)))
+                                         :method (first primary)
+                                         :description
+                                         `(invariant-description
+                                           (class-of (or ,writer-object
+                                                         ,reader-object)))))
                                     ,post-form)
                                 (let ((*inside-contract-p* t))
                                   ,@(call-methods invariant
                                                   'after-invariant-error
                                                   :object `(or ,writer-object
                                                                ,reader-object)
-                                                  :method (first primary))))
+                                                  :method (first primary)
+                                                  :description
+                                                  `(invariant-description
+                                                    (class-of (or ,writer-object
+                                                                  ,reader-object))))))
                               ,post-form)
                          post-form))
            #-:qpq-invariant-checks

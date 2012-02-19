@@ -333,3 +333,12 @@
   (is (= 4
          (test-qpq-/ (make-instance 'feature-test :slot1 2)
                      (make-instance 'feature-test :slot1 8)))))
+
+(defclass function-invariant-test ()
+  ()
+  (:metaclass contracted-class)
+  (:invariants #'integerp))
+
+(test should-fail-invariant-function
+  (signals creation-invariant-error
+    (make-instance 'function-invariant-test)))
