@@ -2,6 +2,7 @@
   (:use #:closer-common-lisp #:closer-mop)
   (:nicknames #:qpq)
   (:export #:contract #:contracted-class #:results #:old #:implies
+           #+ccl #:defcontract
            #:enable-contracts #:disable-contracts
            #:with-contracts-enabled #:with-contracts-disabled
            #:contract-violation-error

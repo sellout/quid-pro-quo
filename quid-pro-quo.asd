@@ -13,6 +13,7 @@
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
                (:file "metaclass" :depends-on ("method-combination"))
+               #+ccl (:file "advice" :depends-on ("package"))
                (:file "system-connections" :depends-on ("metaclass")
                       :description "Enumerates conditionally-loaded files. Look
                                     here for the other files that may be loaded
