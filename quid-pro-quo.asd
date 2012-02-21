@@ -30,4 +30,5 @@
   :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :depends-on (quid-pro-quo fiveam)
-  :components ((:file "quid-pro-quo-test")))
+  :components ((:file "quid-pro-quo-test")
+               #+ccl (:file "advice-tests" :depends-on ("quid-pro-quo-test"))))
