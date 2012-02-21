@@ -13,8 +13,9 @@
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
                (:file "metaclass" :depends-on ("method-combination"))
-               (:file #+ccl "ccl-advice"
-                      #-ccl "missing-advice"
+               (:file #+allegro "acl-fwrap"
+                      #+ccl "ccl-advice"
+                      #-(or allegro ccl) "missing-advice"
                       :depends-on ("package"))
                (:file "system-connections" :depends-on ("metaclass")
                       :description "Enumerates conditionally-loaded files. Look
@@ -33,6 +34,6 @@
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :depends-on (quid-pro-quo fiveam)
   :components ((:file "quid-pro-quo-test")
-               (:file #+ccl "advice-tests"
-                      #-ccl "missing-advice-tests"
+               (:file #+(or allegro ccl) "advice-tests"
+                      #-(or allegro ccl) "missing-advice-tests"
                       :depends-on ("quid-pro-quo-test"))))
