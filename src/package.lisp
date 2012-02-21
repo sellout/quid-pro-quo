@@ -3,7 +3,7 @@
   (:nicknames #:qpq)
   (:export #:contract #:contracted-class #:funcallable-contracted-class
            #:results #:old #:implies
-           #+ccl #:defcontract
+           #:defcontract
            #:enable-contracts #:disable-contracts
            #:with-contracts-enabled #:with-contracts-disabled
            #:contract-violation-error
