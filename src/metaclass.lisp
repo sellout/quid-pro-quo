@@ -9,7 +9,14 @@
                :reader direct-class-invariants)
    (invariant-descriptions :initform ()))
   (:documentation
-   "Use this as the metaclass for any classes you want to add invariants to."))
+   "This is the metaclass for any classes you want to add invariants to."))
+
+(defclass funcallable-contracted-class
+    (contracted-class funcallable-standard-class)
+  ()
+  (:documentation
+   "This is the metaclass for any funcallable classes you want to add invariants
+    to."))
 
 (defun invariant-description (class)
   (let ((description (append (loop for slot in (class-slots class)
@@ -31,7 +38,14 @@
 
 (defmethod validate-superclass
     ((class contracted-class) (superclass standard-class))
-  t)
+  (and (member (class-of class)
+               (list (find-class 'contracted-class)
+                     (find-class 'funcallable-contracted-class)))
+       (member (class-of superclass)
+               (list (find-class 'standard-class)
+                     (find-class 'funcallable-standard-class)
+                     (find-class 'contracted-class)
+                     (find-class 'funcallable-contracted-class)))))
 
 (defmethod ensure-class-using-class :around
     (class name &rest args &key direct-superclasses metaclass)
@@ -42,21 +56,28 @@
   (flet ((get-class (class) (if (classp class) class (find-class class))))
     (let ((contracted-class (find-class 'contracted-class)))
       (if (and ;; skip if it's already specified as a CONTRACTED-CLASS
-               (not (and metaclass
-                         (eq contracted-class (get-class metaclass))))
+               (not (and metaclass (subtypep metaclass contracted-class)))
                ;; skip if there is no contracted superclass
                (some (lambda (sc) (typep (get-class sc) contracted-class))
                      direct-superclasses)
-               ;; skip if the metaclass is not compatible
-               (validate-superclass contracted-class
-                                    (get-class (or metaclass 'standard-class)))
-               ;; skip if some superclass is not compatible
-               (every (lambda (sc)
-                        (validate-superclass contracted-class
-                                             (class-of (get-class sc))))
-                      direct-superclasses))
+               (let ((contracted-prototype (class-prototype contracted-class)))
+                 (and ;; skip if the metaclass is not compatible
+                      (validate-superclass contracted-prototype
+                                           (class-prototype
+                                            (get-class (or metaclass
+                                                           'standard-class))))
+                      ;; skip if some superclass is not compatible
+                      (every (lambda (sc)
+                               (validate-superclass contracted-prototype
+                                                    (get-class sc)))
+                             direct-superclasses))))
           (apply #'call-next-method class name
-                 (cons :metaclass (cons 'contracted-class args)))
+                 (cons :metaclass
+                       (cons (if (subtypep metaclass
+                                           'funcallable-standard-class)
+                                 'funcallable-contracted-class
+                                 'contracted-class)
+                             args)))
           (call-next-method)))))
 
 (defgeneric class-invariants (class)

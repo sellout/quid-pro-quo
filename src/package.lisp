@@ -1,7 +1,8 @@
 (defpackage quid-pro-quo
   (:use #:closer-common-lisp #:closer-mop)
   (:nicknames #:qpq)
-  (:export #:contract #:contracted-class #:results #:old #:implies
+  (:export #:contract #:contracted-class #:funcallable-contracted-class
+           #:results #:old #:implies
            #+ccl #:defcontract
            #:enable-contracts #:disable-contracts
            #:with-contracts-enabled #:with-contracts-disabled
