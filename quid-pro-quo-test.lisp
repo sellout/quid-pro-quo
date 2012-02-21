@@ -347,3 +347,7 @@
 (test should-fail-invariant-function
   (signals creation-invariant-error
     (make-instance 'function-invariant-test)))
+
+(test should-upgrade-subclass
+  (is (typep (defclass sub-invariant-test (function-invariant-test) ())
+             'contracted-class)))

@@ -33,6 +33,32 @@
     ((class contracted-class) (superclass standard-class))
   t)
 
+(defmethod ensure-class-using-class :around
+    (class name &rest args &key direct-superclasses metaclass)
+  "This ensures that any subclass of a CONTRACTED-CLASS is also treated as a
+   CONTRACTED-CLASS (assuming the METACLASS and all DIRECT-SUPERCLASSES are
+   compatible with CONTRACTED-CLASS). This helps us maintain contracts without
+   the subclasser having to know about them."
+  (flet ((get-class (class) (if (classp class) class (find-class class))))
+    (let ((contracted-class (find-class 'contracted-class)))
+      (if (and ;; skip if it's already specified as a CONTRACTED-CLASS
+               (not (and metaclass
+                         (eq contracted-class (get-class metaclass))))
+               ;; skip if there is no contracted superclass
+               (some (lambda (sc) (typep (get-class sc) contracted-class))
+                     direct-superclasses)
+               ;; skip if the metaclass is not compatible
+               (validate-superclass contracted-class
+                                    (get-class (or metaclass 'standard-class)))
+               ;; skip if some superclass is not compatible
+               (every (lambda (sc)
+                        (validate-superclass contracted-class
+                                             (class-of (get-class sc))))
+                      direct-superclasses))
+          (apply #'call-next-method class name
+                 (cons :metaclass (cons 'contracted-class args)))
+          (call-next-method)))))
+
 (defgeneric class-invariants (class)
   (:method ((class contracted-class))
     (apply #'append
