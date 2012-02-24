@@ -90,12 +90,17 @@
    (after (:after))
    (postcondition (:ensure . *)))
   ;; NOTE: This gives us access to the object for invariant errors. Invariants
-  ;;       only exist on readers, writers, and MAKE-INSTANCE. For writers, the
-  ;;       object we care about is the second argument, in the other cases it's
-  ;;       the first (and only). So here we grab the first two, and if it's a
-  ;;       reader, WRITER-OBJECT will be nil.
+  ;;       only exist on slot accessors. For writers, the object we care about
+  ;;       is the second argument, in the other cases it's the first (and only).
+  ;;       So here we grab the first two, and if it's a reader, WRITER-OBJECT
+  ;;       will be nil.
   (:arguments reader-object writer-object)
   (:generic-function gf)
+  "This method combination extends the STANDARD method combination by adding
+  :require and :ensure methods for pre- and postconditions, respectively. It
+   also provides invariants, which are created automatically on slot-accessors
+   for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
+   not be created explicitly."
   (labels ((call-methods
                (methods &optional error-type &rest condition-parameters)
              (mapcar (lambda (method)
