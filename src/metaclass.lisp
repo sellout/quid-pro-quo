@@ -204,8 +204,8 @@
 ;; NOTE: This is done in MAKE-INSTANCE rather than INITIALIZE-INSTANCE because
 ;;       the class needs to be finalized before we can loop over the slots.
 (defmethod make-instance :after
-    ((instance contracted-class) &key &allow-other-keys)
-  (mapc (lambda (function) (funcall function instance))
+    ((class contracted-class) &key &allow-other-keys)
+  (mapc (lambda (function) (funcall function class))
         *invariant-initializers*))
 
 (defmethod reinitialize-instance :after
