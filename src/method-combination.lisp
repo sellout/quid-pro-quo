@@ -101,23 +101,22 @@
    also provides invariants, which are created automatically on slot-accessors
    for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
    not be created explicitly."
-  (labels ((call-methods
-               (methods &optional error-type &rest condition-parameters)
-             (mapcar (lambda (method)
-                       (if error-type
-                           (progn
-                             (unless (getf condition-parameters :description)
-                                  (setf (getf condition-parameters :description)
-                                        (or (second (method-qualifiers method))
-                                            (documentation method t))))
-                             `(unless (call-method ,method)
-                                (error ',error-type ,@condition-parameters)))
-                           `(call-method ,method)))
-                     methods))
-           (prepare-postconditions (methods)
-             (mapcar (lambda (method)
-                       `(ignore-errors (call-method ,method)))
-                     (reverse methods))))
+  (flet ((call-methods
+             (methods &optional error-type &rest condition-parameters)
+           (mapcar (lambda (method)
+                     (if error-type
+                         (progn
+                           (unless (getf condition-parameters :description)
+                             (setf (getf condition-parameters :description)
+                                   (or (second (method-qualifiers method))
+                                       (documentation method t))))
+                           `(unless (call-method ,method)
+                              (error ',error-type ,@condition-parameters)))
+                         `(call-method ,method)))
+                   methods))
+         (prepare-postconditions (methods)
+           (mapcar (lambda (method) `(ignore-errors (call-method ,method)))
+                   (reverse methods))))
     (let* ((std-form (combine-standard-methods around before primary after))
            #+:qpq-precondition-checks
            (pre-form (if (and precondition-check
