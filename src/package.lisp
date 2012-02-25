@@ -1,5 +1,5 @@
 (defpackage quid-pro-quo
-  (:use #:closer-common-lisp #:closer-mop)
+  (:use #:closer-common-lisp #:closer-mop #:method-combination-utilities)
   (:nicknames #:qpq)
   (:export #:contract #:contracted-class #:funcallable-contracted-class
            #:results #:old #:implies

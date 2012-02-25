@@ -7,7 +7,7 @@
   :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
-  :depends-on (closer-mop asdf-system-connections)
+  :depends-on (closer-mop method-combination-utilities asdf-system-connections)
   :pathname "src/"
   :components ((:file "package")
                (:file "conditions" :depends-on ("package"))

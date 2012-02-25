@@ -87,7 +87,7 @@
    (around (:around))
    (before (:before))
    (primary () :required t)
-   (after (:after))
+   (after (:after) :order :most-specific-last)
    (postcondition (:ensure . *)))
   ;; NOTE: This gives us access to the object for invariant errors. Invariants
   ;;       only exist on slot accessors. For writers, the object we care about
@@ -117,16 +117,7 @@
              (mapcar (lambda (method)
                        `(ignore-errors (call-method ,method)))
                      (reverse methods))))
-    (let* ((form (if (or before after (rest primary))
-                     `(multiple-value-prog1
-                          (progn ,@(call-methods before)
-                                 (call-method ,(first primary) ,(rest primary)))
-                        ,@(call-methods (reverse after)))
-                     `(call-method ,(first primary) ,(rest primary))))
-           (around-form (if around
-                            `(call-method ,(first around)
-                                          (,@(rest around) (make-method ,form)))
-                            form))
+    (let* ((std-form (combine-standard-methods around before primary after))
            #+:qpq-precondition-checks
            (pre-form (if (and precondition-check
                               precondition
@@ -154,10 +145,10 @@
                                                           (method-qualifiers
                                                            (first precondition)))
                                            :method ,(first primary))))))
-                            ,around-form)
-                         around-form))
+                            ,std-form)
+                         std-form))
            #-:qpq-precondition-checks
-           (pre-form around-form)
+           (pre-form std-form)
            #+:qpq-postcondition-checks
            (post-form (if (and postcondition-check
                                postcondition
