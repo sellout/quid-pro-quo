@@ -107,9 +107,9 @@
                        (if error-type
                            (progn
                              (unless (getf condition-parameters :description)
-                               (setf (getf condition-parameters :description)
-                                     (or (second (method-qualifiers method))
-                                         (documentation method t))))
+                                  (setf (getf condition-parameters :description)
+                                        (or (second (method-qualifiers method))
+                                            (documentation method t))))
                              `(unless (call-method ,method)
                                 (error ',error-type ,@condition-parameters)))
                            `(call-method ,method)))
@@ -156,12 +156,12 @@
                                (not *inside-contract-p*))
                           `(if *check-postconditions-p*
                                (progn
-                                 (unless ,(find gf
-                                                (list #'make-instance
-                                                      #'initialize-instance))
-                                   (let ((*preparing-postconditions* t)
-                                         (*inside-contract-p* t))
-                                     ,@(prepare-postconditions postcondition)))
+                                 ,@(unless (find gf
+                                                 (list #'make-instance
+                                                       #'initialize-instance))
+                                     `((let ((*preparing-postconditions* t)
+                                             (*inside-contract-p* t))
+                                         ,@(prepare-postconditions postcondition))))
                                  (let ((%results (multiple-value-list ,pre-form))
                                        (*inside-contract-p* t))
                                    ,@(apply #'call-methods
@@ -220,3 +220,26 @@
              (writer-object ,writer-object))
          (declare (ignorable reader-object writer-object))
          ,inv-form))))
+
+#|
+(defmethod documentation ((x contracted-function) (doc-type (eql 'type)))
+  (format nil "~@[~A~]~@[~&ensures:~%~A~]"
+          (call-next-method)
+          (let ((method (find-if (lambda (method)
+                                   (and (eq :ensure
+                                            (car (method-qualifiers method)))
+                                        (every (lambda (specializer)
+                                                 (eq (find-class t)
+                                                     specializer))
+                                               (method-specializers method))))
+                                 (generic-function-methods x))))
+            (when method (second (method-qualifiers method))))))
+
+(defmethod documentation ((x contracted-method) (doc-type (eql 'type)))
+  (format nil "~@[~A~]~@[~&requires:~%~A~]~@[~&ensures:~%~A~]"
+          (call-next-method)
+          ;; get description from most-specific applicable precondition
+          ;; get descriptions from all applicable postconditions (ordered most-
+          ;; to least-specific
+          ))
+|#
