@@ -48,7 +48,7 @@
                      (find-class 'funcallable-contracted-class)))))
 
 (defmethod ensure-class-using-class :around
-    (class name &rest args &key direct-superclasses metaclass)
+    (class name &rest args &key direct-superclasses metaclass &allow-other-keys)
   "This ensures that any subclass of a CONTRACTED-CLASS is also treated as a
    CONTRACTED-CLASS (assuming the METACLASS and all DIRECT-SUPERCLASSES are
    compatible with CONTRACTED-CLASS). This helps us maintain contracts without
