@@ -1,8 +1,9 @@
 (in-package #:quid-pro-quo)
 
 (defvar *contract-method-combination*
-  #-(or allegro sbcl) (find-method-combination #'make-instance 'contract '())
-  #+(or allegro sbcl) '(contract))
+  #-(or allegro cmucl sbcl)
+  (find-method-combination #'make-instance 'contract '())
+  #+(or allegro cmucl sbcl) '(contract))
 
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
@@ -71,13 +72,15 @@
                                (validate-superclass contracted-prototype
                                                     (get-class sc)))
                              direct-superclasses))))
-          (apply #'call-next-method class name
-                 (cons :metaclass
-                       (cons (if (subtypep metaclass
-                                           'funcallable-standard-class)
-                                 'funcallable-contracted-class
-                                 'contracted-class)
-                             args)))
+          (progn
+            ;;; NOTE: We SETF here instead of just CONSing the new value onto
+            ;;;       ARGS because CMUCL errors if there are two method
+            ;;;       combinations, even though that is legal CL.
+            (setf (getf args :metaclass)
+                  (if (subtypep metaclass 'funcallable-standard-class)
+                      'funcallable-contracted-class
+                      'contracted-class))
+            (apply #'call-next-method class name args))
           (call-next-method)))))
 
 (defgeneric class-invariants (class)
