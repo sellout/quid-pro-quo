@@ -1,9 +1,16 @@
 (in-package #:quid-pro-quo)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (pushnew :qpq-precondition-checks *features*)
-  (pushnew :qpq-postcondition-checks *features*)
-  (pushnew :qpq-invariant-checks *features*))
+(format *error-output* 
+"~&;  NOTE: Quid Pro Quo was compiled with preconditions ~A, postconditions~@
+   ;        ~A, and invariants ~A. If you wish to change this, you must add~@
+   ;        or remove :QPQ-*-CHECKS-DISABLED in *FEATURES* and recompile the~@
+   ;        system.~%"
+        #+qpq-precondition-checks-disabled 'off
+        #-qpq-precondition-checks-disabled 'on
+        #+qpq-postcondition-checks-disabled 'off
+        #-qpq-postcondition-checks-disabled 'on
+        #+qpq-invariant-checks-disabled 'off
+        #-qpq-invariant-checks-disabled 'on)
 
 (defvar *check-invariants-p* t)
 (defvar *check-preconditions-p* t)
@@ -11,9 +18,15 @@
 
 (defun enabled-contracts ()
   "Returns a list of arguments suitable to APPLYing to ENABLE-CONTRACTS."
-  (list :invariants *check-invariants-p*
-        :preconditions *check-preconditions-p*
-        :postconditions *check-postconditions-p*))
+  (list :invariants
+        #+qpq-invariant-checks-disabled nil
+        #-qpq-invariant-checks-disabled *check-invariants-p*
+        :preconditions
+        #+qpq-precondition-checks-disabled nil
+        #-qpq-precondition-checks-disabled *check-preconditions-p*
+        :postconditions
+        #+qpq-postcondition-checks-disabled nil
+        #-qpq-postcondition-checks-disabled *check-postconditions-p*))
 
 (defun enable-contracts
     (&key (invariants nil invp)
@@ -116,7 +129,9 @@
            (mapcar (lambda (method) `(ignore-errors (call-method ,method)))
                    (reverse methods))))
     (let* ((std-form (combine-standard-methods primary around before after))
-           #+:qpq-precondition-checks
+           #+:qpq-precondition-checks-disabled
+           (pre-form std-form)
+           #-:qpq-precondition-checks-disabled
            (pre-form (if (and precondition-check
                               precondition
                               (not *inside-contract-p*))
@@ -145,9 +160,9 @@
                                            :method ,(first primary))))))
                             ,std-form)
                          std-form))
-           #-:qpq-precondition-checks
-           (pre-form std-form)
-           #+:qpq-postcondition-checks
+           #+:qpq-postcondition-checks-disabled
+           (post-form pre-form)
+           #-:qpq-postcondition-checks-disabled
            (post-form (if (and postcondition-check
                                postcondition
                                (not *inside-contract-p*))
@@ -174,9 +189,9 @@
                                    (results)))
                                ,pre-form)
                           pre-form))
-           #-:qpq-postcondition-checks
-           (post-form pre-form)
-           #+:qpq-invariant-checks
+           #+:qpq-invariant-checks-disabled
+           (inv-form post-form)
+           #-:qpq-invariant-checks-disabled
            (inv-form (if (and invariant-check
                               invariant
                               (not *inside-contract-p*))
@@ -206,9 +221,7 @@
                                                     (class-of (or ,writer-object
                                                                   ,reader-object))))))
                               ,post-form)
-                         post-form))
-           #-:qpq-invariant-checks
-           (inv-form post-form))
+                         post-form)))
       ;; NOTE: This LET form is a workaround because there's no way to specify
       ;;       IGNORABLE in the right place, so we use the outer variables to
       ;;       bind the inner ones, then we can declare the inner ones as
