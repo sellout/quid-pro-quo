@@ -4,6 +4,9 @@
 (in-package #:quid-pro-quo.system)
 
 (defsystem quid-pro-quo
+  :description "A contract programming library for Common Lisp in the style of
+                Eiffel's Design by Contract ."
+  :long-description "See README.md"
   :author "Matthias Hoelzl <tc@gauss.muc.de>"
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :license "Public Domain"
