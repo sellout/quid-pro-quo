@@ -101,23 +101,21 @@
    also provides invariants, which are created automatically on slot-accessors
    for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
    not be created explicitly."
-  (flet ((call-methods
-             (methods &optional error-type &rest condition-parameters)
+  (flet ((test-methods
+             (methods error-type
+              &rest condition-parameters &key &allow-other-keys)
            (mapcar (lambda (method)
-                     (if error-type
-                         (progn
-                           (unless (getf condition-parameters :description)
-                             (setf (getf condition-parameters :description)
-                                   (or (second (method-qualifiers method))
-                                       (documentation method t))))
-                           `(unless (call-method ,method)
-                              (error ',error-type ,@condition-parameters)))
-                         `(call-method ,method)))
+                     (unless (getf condition-parameters :description)
+                       (setf (getf condition-parameters :description)
+                             (or (second (method-qualifiers method))
+                                 (documentation method t))))
+                     `(unless (call-method ,method)
+                        (error ',error-type ,@condition-parameters)))
                    methods))
          (prepare-postconditions (methods)
            (mapcar (lambda (method) `(ignore-errors (call-method ,method)))
                    (reverse methods))))
-    (let* ((std-form (combine-standard-methods around before primary after))
+    (let* ((std-form (combine-standard-methods primary around before after))
            #+:qpq-precondition-checks
            (pre-form (if (and precondition-check
                               precondition
@@ -163,7 +161,7 @@
                                          ,@(prepare-postconditions postcondition))))
                                  (let ((%results (multiple-value-list ,pre-form))
                                        (*inside-contract-p* t))
-                                   ,@(apply #'call-methods
+                                   ,@(apply #'test-methods
                                             postcondition
                                             (if (eq gf #'make-instance)
                                                 (list 'creation-invariant-error
@@ -186,7 +184,7 @@
                               (multiple-value-prog1
                                   (progn
                                     (let ((*inside-contract-p* t))
-                                      ,@(call-methods
+                                      ,@(test-methods
                                          invariant
                                          'before-invariant-error
                                          :object `(or ,writer-object
@@ -198,7 +196,7 @@
                                                          ,reader-object)))))
                                     ,post-form)
                                 (let ((*inside-contract-p* t))
-                                  ,@(call-methods invariant
+                                  ,@(test-methods invariant
                                                   'after-invariant-error
                                                   :object `(or ,writer-object
                                                                ,reader-object)
