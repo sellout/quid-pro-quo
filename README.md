@@ -63,6 +63,7 @@ Preconditions (`:require`) and postconditions (`:ensure`) are added to functions
 ```
 
 This simple example illustrates a few things:
+
 * an optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily available),
 * the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call, and
 * the function `results` is available in postconditions which returns the same values returned by the primary method.
