@@ -44,19 +44,20 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 ## Usage
 
-Preconditions (`:require`) and postconditions (`:ensure`) are added to functions similarly to `:before` and `:after` methods.
+Preconditions (`defrequirement`) and postconditions (`defguarantee`) are added to functions. This works for both generic and non-generic functions (but contracts on non-generic functions may do nothing on certain lisp implementations).
 
 ```common-lisp
-(defmethod put :require "the stack is not full" (item (stack stack))
+(defrequirement put (item (stack stack))
+  "the stack is not full"
   (declare (ignore item))
   (not (full stack)))
 
-(defmethod put :ensure (item (stack stack))
+(defguarantee put (item (stack stack))
   (and (not (empty stack))
        (eq (top-item stack) item)
        (= (count stack) (1+ (old (count stack))))))
 
-(defmethod pop-stack :ensure ((stack stack))
+(defguarantee pop-stack ((stack stack))
   (and (not (full stack))
        (eq (results) (old (top-item stack)))
        (= (count stack) (1- (old (count stack)))))
@@ -64,9 +65,27 @@ Preconditions (`:require`) and postconditions (`:ensure`) are added to functions
 
 This simple example illustrates a few things:
 
-* an optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily available),
+* the docstring is included in any contract failure messages,
 * the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call, and
 * the function `results` is available in postconditions which returns the same values returned by the primary method.
+
+These contracts can also be created similarly to `:before` and `:after` methods, primarily for `defgeneric` convenience. In this case, the optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily accessible).
+
+```common-lisp
+(defgeneric put (item stack)
+  (:method :require "the stack is not full" (item (stack stack))
+    (declare (ignore item))
+    (not (full stack)))
+  (:method :ensure (item (stack stack))
+    (and (not (empty stack))
+         (eq (top-item stack) item)
+         (= (count stack) (1+ (old (count stack))))))
+
+(defmethod pop-stack :ensure ((stack stack))
+  (and (not (full stack))
+       (eq (results) (old (top-item stack)))
+       (= (count stack) (1- (old (count stack)))))
+```
 
 Invariants can be placed on classes.
 
@@ -93,4 +112,4 @@ This also illustrates another macro that is useful in contracts – `implies`. W
 
 Types are also checked as invariants. Most implementations check slot types little enough that it's possible for a bad value to end up there in some cases.
 
-The description (for `:require` and `:ensure`, as well as invariants) is included in the report if a `contract-violation-error` is raised. The description is also added to the documentation for the class, function, or primary method as appropriate. Slot type declarations are also added to the class documentation.
+The description is included in the report if a `contract-violation-error` is raised. The description is also added to the documentation for the class, function, or primary method as appropriate. Slot type declarations are also added to the class documentation.

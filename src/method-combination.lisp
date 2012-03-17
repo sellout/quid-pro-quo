@@ -107,10 +107,10 @@
   ;;       is the second argument, in the other cases it's the first (and only).
   ;;       So here we grab the first two, and if it's a reader, WRITER-OBJECT
   ;;       will be nil.
-  (:arguments reader-object writer-object)
+  (:arguments &whole whole reader-object writer-object)
   (:generic-function gf)
   "This method combination extends the STANDARD method combination by adding
-  :require and :ensure methods for pre- and postconditions, respectively. It
+  :REQUIRE and :ENSURE methods for pre- and postconditions, respectively. It
    also provides invariants, which are created automatically on slot-accessors
    for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
    not be created explicitly."
@@ -123,7 +123,10 @@
                              (or (second (method-qualifiers method))
                                  (documentation method t))))
                      `(unless (call-method ,method)
-                        (error ',error-type ,@condition-parameters)))
+                        (error ',error-type
+                               :failed-check ,method
+                               :arguments ,whole
+                               ,@condition-parameters)))
                    methods))
          (prepare-postconditions (methods)
            (mapcar (lambda (method) `(ignore-errors (call-method ,method)))
@@ -151,13 +154,16 @@
                                   (when (and last-success
                                              (< first-failure last-success))
                                     (warn 'overly-strict-precondition-warning
-                                          :method ,(first primary)))
+                                          :function ,gf
+                                          :arguments ,whole
+                                          :more-strict-method (nth first-failure
+                                                                   ',precondition)
+                                          :less-strict-method (nth last-success
+                                                                   ',precondition)))
                                   (when (= first-failure 0)
                                     (error 'precondition-error
-                                           :description ,(second
-                                                          (method-qualifiers
-                                                           (first precondition)))
-                                           :method ,(first primary))))))
+                                           :failed-check ,(first precondition)
+                                           :arguments ,whole)))))
                             ,std-form)
                          std-form))
            #+:qpq-postcondition-checks-disabled
@@ -184,8 +190,7 @@
                                                       :description
                                                       `(invariant-description
                                                         ,reader-object))
-                                                (list 'postcondition-error
-                                                      :method (first primary))))
+                                                (list 'postcondition-error)))
                                    (results)))
                                ,pre-form)
                           pre-form))
@@ -204,7 +209,6 @@
                                          'before-invariant-error
                                          :object `(or ,writer-object
                                                       ,reader-object)
-                                         :method (first primary)
                                          :description
                                          `(invariant-description
                                            (class-of (or ,writer-object
@@ -215,7 +219,6 @@
                                                   'after-invariant-error
                                                   :object `(or ,writer-object
                                                                ,reader-object)
-                                                  :method (first primary)
                                                   :description
                                                   `(invariant-description
                                                     (class-of (or ,writer-object
@@ -230,6 +233,36 @@
              (writer-object ,writer-object))
          (declare (ignorable reader-object writer-object))
          ,inv-form))))
+
+(defmacro defrequirement (name (&rest lambda-list) &body body)
+  "Adds a precondition to the NAMEd function. It can be either a generic or
+   non-generic function. If it's the former, then use a specialized lambda list,
+   otherwise use an ordinary lambda list. The docstring, if any, will be used in
+   failure reports."
+  (multiple-value-bind (remaining-forms declarations doc-string)
+      (parse-body body :documentation t)
+    (declare (ignore remaining-forms declarations))
+    `(if (typep (fdefinition ',name) 'generic-function)
+         (defmethod ,name :require ,@(when doc-string (list doc-string))
+                    ,lambda-list
+                    ,@body)
+         (defcontract ,name :require ,lambda-list
+           ,@body))))
+
+(defmacro defguarantee (name (&rest lambda-list) &body body)
+  "Adds a postcondition to the NAMEd function. It can be either a generic or
+   non-generic function. If it's the former, then use a specialized lambda list,
+   otherwise use an ordinary lambda list. The docstring, if any, will be used in
+   failure reports."
+  (multiple-value-bind (remaining-forms declarations doc-string)
+      (parse-body body :documentation t)
+    (declare (ignore remaining-forms declarations))
+    `(if (typep (fdefinition ',name) 'generic-function)
+         (defmethod ,name :ensure ,@(when doc-string (list doc-string))
+                    ,lambda-list
+                    ,@body)
+         (defcontract ,name :ensure ,lambda-list
+           ,@body))))
 
 #|
 (defmethod documentation ((x contracted-function) (doc-type (eql 'type)))

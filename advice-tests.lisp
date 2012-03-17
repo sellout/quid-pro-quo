@@ -7,10 +7,12 @@
 (defun add (&rest addends)
   (apply #'+ addends))
 
-(defcontract add :require "all args < 10" (&rest addends)
+(defrequirement add (&rest addends)
+  "all args < 10"
   (every (lambda (n) (< n 10)) addends))
 
-(defcontract add :ensure "result < 20" (&rest addends)
+(defguarantee add (&rest addends)
+  "result < 20"
   (declare (ignore addends))
   (< (results) 20))
 

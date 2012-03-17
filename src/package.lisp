@@ -1,9 +1,11 @@
 (defpackage quid-pro-quo
-  (:use #:closer-common-lisp #:closer-mop #:method-combination-utilities)
+  (:use #:closer-common-lisp #:closer-mop
+        #:method-combination-utilities
+        #:alexandria)
   (:nicknames #:qpq)
   (:export #:contract #:contracted-class #:funcallable-contracted-class
            #:results #:old #:implies
-           #:defcontract
+           #:defrequirement #:defguarantee
            #:enable-contracts #:disable-contracts
            #:with-contracts-enabled #:with-contracts-disabled
            #:contract-violation-error

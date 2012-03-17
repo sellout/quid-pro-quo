@@ -9,11 +9,13 @@
 
 (test should-warn-and-fail-to-create-contract
   (signals warning
-    (defcontract add :require "all args < 10" (&rest addends)
+    (defrequirement add (&rest addends)
+      "all args < 10"
       (every (lambda (n) (< n 10)) addends))))
 
 (handler-bind ((warning #'muffle-warning))
-  (defcontract add :ensure "result < 20" (&rest addends)
+  (defguarantee add (&rest addends)
+    "result < 20"
     (declare (ignore addends))
     (< (results) 20)))
 

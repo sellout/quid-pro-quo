@@ -49,8 +49,7 @@
         (test-qpq 12345678900987654321.0 100)
         (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
     (overly-strict-precondition-warning (c)
-      (is (eq #'test-qpq
-              (method-generic-function (qpq::condition-method c)))))))
+      (is (eq #'test-qpq (slot-value c 'qpq::function))))))
 
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
@@ -71,7 +70,7 @@
         (fail "Failed to signal PRECONDITION-ERROR."))
     (precondition-error (c)
       (is (eq #'test-qpq
-              (method-generic-function (qpq::condition-method c)))))))
+              (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 (test should-fail-result-postcondition
   (signals postcondition-error
@@ -89,7 +88,7 @@
         (fail "Failed to signal POSTCONDITION-ERROR."))
     (postcondition-error (c)
       (is (eq #'test-qpq
-              (method-generic-function (qpq::condition-method c)))))))
+              (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 ;; FIXME: This is here so that the tests compile on CLISP. However, it shouldn't
 ;;        be necessary, as defining a CONTRACTED-CLASS should guarantee that all
@@ -112,10 +111,10 @@
                  (declare (ignore instance))
                  t)))
 
-(defmethod my-slot :require ((bar bar))
+(defrequirement my-slot ((bar bar))
   t)
 
-(defmethod my-slot :ensure ((bar bar))
+(defguarantee my-slot ((bar bar))
   t)
 
 (defclass bar-2 (foo)
@@ -192,20 +191,21 @@
           (fail "Failed to signal AFTER-INVARIANT-ERROR."))
       (after-invariant-error (c)
         (is (eq #'(setf my-slot)
-                (method-generic-function (qpq::condition-method c))))
-        (is (eq test (qpq::object c)))))))
+                (method-generic-function (slot-value c 'qpq::failed-check))))
+        (is (eq test (slot-value c 'qpq::object)))))))
 
 (test should-fail-on-invariant-of-superclass
   (signals after-invariant-error
     (setf (my-slot (make-instance 'test-2)) nil)))
 
-(defmethod test-qpq :require "first arg < 123" ((m test-2) (n test-1))
+(defrequirement test-qpq ((m test-2) (n test-1))
+  "first arg < 123"
   (< (my-slot m) 123))
-(defmethod test-qpq :require "second arg needs null another-slot"
-                    ((m test-1) (n test-2))
+(defrequirement test-qpq ((m test-1) (n test-2))
+  "second arg needs null another-slot"
   (null (another-slot n)))
-(defmethod test-qpq :require "first arg needs non-zero my-slot"
-                    ((m test-1) (n test-1))
+(defrequirement test-qpq ((m test-1) (n test-1))
+  "first arg needs non-zero my-slot"
   (not (zerop (my-slot m))))
 
 (defmethod test-qpq :around ((m test-1) (n test-1))
@@ -217,9 +217,9 @@
 (defmethod test-qpq :after ((m test-1) (n test-1))
   (list m n 'after))
 
-(defmethod test-qpq :ensure ((m test-1) (n test-2))
+(defguarantee test-qpq ((m test-1) (n test-2))
   (null (another-slot n)))
-(defmethod test-qpq :ensure ((m test-1) (n test-1))
+(defguarantee test-qpq ((m test-1) (n test-1))
   (or (zerop (my-slot m)) (zerop (my-slot n))))
 
 (defun fail-invariant (m)
