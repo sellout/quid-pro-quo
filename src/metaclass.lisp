@@ -122,11 +122,6 @@
   (and (passes-slot-type-invariants-p object)
        (passes-class-invariants-p object)))
 
-;;; FIXME: (when description (list description)) should be in ADD-INVARIANT, not
-;;;        ADD-READER-INVARIANT and ADD-WRITER-INVARIANT. However, Closer-MOP
-;;;        currently breaks if we do that, so the current approach is fine until
-;;;        that's fixed.
-
 (defun add-invariant
     (function-name description lambda-list specializers lambda-body)
   (let* ((generic-function (ensure-generic-function
@@ -138,6 +133,8 @@
                                    (make-method-lambda generic-function
                                                        method-prototype
                                                        `(lambda ,lambda-list
+                                                          ,@(when description
+                                                              (list description))
                                                           ,@lambda-body)
                                                        nil))))
     (add-method generic-function
@@ -148,23 +145,19 @@
                                :function method-function))))
 
 (defun add-reader-invariant (reader class)
-  (let ((description (invariant-description class)))
-    (add-invariant reader
-                   description
-                   '(object)
-                   (list class)
-                   `(,@(when description (list description))
-                       (passes-invariants-p object)))))
+  (add-invariant reader
+                 (invariant-description class)
+                 '(object)
+                 (list class)
+                 '((passes-invariants-p object))))
 
 (defun add-writer-invariant (writer class)
-  (let ((description (invariant-description class)))
-    (add-invariant writer
-                   description
-                   '(new-value object)
-                   (list (find-class t) class)
-                   `((declare (ignore new-value))
-                     ,@(when description (list description))
-                     (passes-invariants-p object)))))
+  (add-invariant writer
+                 (invariant-description class)
+                 '(new-value object)
+                 (list (find-class t) class)
+                 '((declare (ignore new-value))
+                   (passes-invariants-p object))))
 
 (defun all-direct-slots (class)
   (apply #'append
