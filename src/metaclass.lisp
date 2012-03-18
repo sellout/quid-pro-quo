@@ -2,7 +2,10 @@
 
 (defvar *contract-method-combination*
   #-(or allegro cmucl sbcl)
-  (find-method-combination #'make-instance 'contract '())
+  (find-method-combination (class-prototype
+                            (find-class 'standard-generic-function))
+                           'contract
+                           '())
   #+(or allegro cmucl sbcl) '(contract))
 
 (defclass contracted-class (standard-class)
