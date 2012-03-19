@@ -126,6 +126,7 @@
     (function-name description lambda-list specializers lambda-body)
   (let* ((generic-function (ensure-generic-function
                             function-name
+                            :generic-function-class 'standard-generic-function
                             :lambda-list lambda-list
                             :method-combination *contract-method-combination*))
          (method-prototype (class-prototype (find-class 'standard-method)))
