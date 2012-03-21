@@ -1,6 +1,6 @@
 (in-package #:quid-pro-quo)
 
-(format *error-output* 
+(format *error-output*
 "~&;  NOTE: Quid Pro Quo was compiled with preconditions ~A, postconditions~@
    ;        ~A, and invariants ~A. If you wish to change this, you must add~@
    ;        or remove :QPQ-*-CHECKS-DISABLED in *FEATURES* and recompile the~@
