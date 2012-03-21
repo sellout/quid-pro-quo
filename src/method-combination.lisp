@@ -244,12 +244,13 @@
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore remaining-forms declarations))
-    `(if (typep (fdefinition ',name) 'generic-function)
+    `(if (and (fboundp ',name)
+              (not (typep (fdefinition ',name) 'generic-function)))
+         (defcontract ,name :require ,lambda-list
+           ,@body)
          (defmethod ,name :require ,@(when doc-string (list doc-string))
                     ,lambda-list
-                    ,@body)
-         (defcontract ,name :require ,lambda-list
-           ,@body))))
+                    ,@body))))
 
 (defmacro defguarantee (name (&rest lambda-list) &body body)
   "Adds a postcondition to the NAMEd function. It can be either a generic or
@@ -259,12 +260,13 @@
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore remaining-forms declarations))
-    `(if (typep (fdefinition ',name) 'generic-function)
+    `(if (and (fboundp ',name)
+              (not (typep (fdefinition ',name) 'generic-function)))
+         (defcontract ,name :ensure ,lambda-list
+           ,@body)
          (defmethod ,name :ensure ,@(when doc-string (list doc-string))
                     ,lambda-list
-                    ,@body)
-         (defcontract ,name :ensure ,lambda-list
-           ,@body))))
+                    ,@body))))
 
 #|
 (defmethod documentation ((x contracted-function) (doc-type (eql 'type)))
