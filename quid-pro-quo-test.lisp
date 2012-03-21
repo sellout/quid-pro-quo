@@ -93,6 +93,7 @@
 ;; FIXME: This is here so that the tests compile on CLISP. However, it shouldn't
 ;;        be necessary, as defining a CONTRACTED-CLASS should guarantee that all
 ;;        accessors for slots on that class have the correct method combination.
+#+clisp
 (defgeneric my-slot (x)
   (:method-combination contract))
 

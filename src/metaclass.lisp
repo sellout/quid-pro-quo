@@ -217,9 +217,14 @@
 ;;       postcondition, but special-case it in the method-combination to error
 ;;       as an invariant.
 
+;; FIXME: CLISP explodes if we execute the following code, so we basically skip
+;;        creation invariants on CLISP.
+
+#-clisp
 (ensure-generic-function 'make-instance
                          :method-combination *contract-method-combination*)
 
+#-clisp
 (defmethod make-instance :ensure ((class contracted-class) &rest initargs)
   (declare (ignore initargs))
   (passes-invariants-p (results)))

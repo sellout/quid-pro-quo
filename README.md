@@ -34,7 +34,7 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 * ABCL – NO, because it’s not supported by Closer-MOP
 * Allegro (both ansi & modern) – **YES**
-* CLISP – currently fails tests (16 pass, 20 fail)
+* CLISP – currently fails tests (31 pass, 6 fail)
 * Clozure – **YES**
 * CMUCL – currently fails tests (29 pass, 7 fail)
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
