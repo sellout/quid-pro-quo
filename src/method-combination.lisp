@@ -122,7 +122,9 @@
                        (setf (getf condition-parameters :description)
                              (or (second (method-qualifiers method))
                                  (documentation method t))))
-                     `(unless (call-method ,method)
+                     ;; FIXME: CMUCL errors if this CALL-METHOD form doesn't
+                     ;;        have a second argument for some reason.
+                     `(unless (call-method ,method ())
                         (error ',error-type
                                :failed-check ,method
                                :arguments ,whole
