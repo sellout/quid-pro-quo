@@ -27,11 +27,11 @@
   (:method :after ((m number) (n number))
     (list (+ m 1) (+ n 1)))
 
-  (:method :ensure "results are fixnum" ((m integer) (n integer))
+  (:method :guarantee "results are fixnum" ((m integer) (n integer))
     (<= most-negative-fixnum (reduce #'+ (results)) most-positive-fixnum))
-  (:method :ensure "999" ((m number) (n integer))
+  (:method :guarantee "999" ((m number) (n integer))
     999)
-  (:method :ensure "always true" ((m number) (n number))
+  (:method :guarantee "always true" ((m number) (n number))
     t))
 
 (test should-warn-overly-strict-precondition

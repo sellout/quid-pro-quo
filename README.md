@@ -69,19 +69,19 @@ This simple example illustrates a few things:
 * the macro `old` is available in postconditions so that state from before the call can be compared to the state after the call, and
 * the function `results` is available in postconditions which returns the same values returned by the primary method.
 
-These contracts can also be created similarly to `:before` and `:after` methods, primarily for `defgeneric` convenience. In this case, the optional description of what is being required or ensured can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily accessible).
+These contracts can also be created similarly to `:before` and `:after` methods, primarily for `defgeneric` convenience. In this case, the optional description of what is being required or guaranteed can be included between the method qualifier and the lambda list (this is because the docstring is not necessarily accessible).
 
 ```common-lisp
 (defgeneric put (item stack)
   (:method :require "the stack is not full" (item (stack stack))
     (declare (ignore item))
     (not (full stack)))
-  (:method :ensure (item (stack stack))
+  (:method :guarantee (item (stack stack))
     (and (not (empty stack))
          (eq (top-item stack) item)
          (= (count stack) (1+ (old (count stack))))))
 
-(defmethod pop-stack :ensure ((stack stack))
+(defmethod pop-stack :guarantee ((stack stack))
   (and (not (full stack))
        (eq (results) (old (top-item stack)))
        (= (count stack) (1- (old (count stack)))))

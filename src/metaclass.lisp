@@ -146,17 +146,17 @@
                                :function method-function))))
 
 (defun add-reader-invariant (reader class)
-  (add-invariant reader
+    (add-invariant reader
                  (invariant-description class)
-                 '(object)
-                 (list class)
+                   '(object)
+                   (list class)
                  '((passes-invariants-p object))))
 
 (defun add-writer-invariant (writer class)
-  (add-invariant writer
+    (add-invariant writer
                  (invariant-description class)
-                 '(new-value object)
-                 (list (find-class t) class)
+                   '(new-value object)
+                   (list (find-class t) class)
                  '((declare (ignore new-value))
                    (passes-invariants-p object))))
 
@@ -225,6 +225,6 @@
                          :method-combination *contract-method-combination*)
 
 #-clisp
-(defmethod make-instance :ensure ((class contracted-class) &rest initargs)
+(defmethod make-instance :guarantee ((class contracted-class) &rest initargs)
   (declare (ignore initargs))
   (passes-invariants-p (results)))

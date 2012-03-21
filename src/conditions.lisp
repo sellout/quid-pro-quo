@@ -47,7 +47,7 @@
   (:report (lambda (condition stream)
              (with-slots (failed-check arguments) condition
                (format stream
-                       "~A failed to ensure ~
+                       "~A failed to guarantee ~
                        ~:[its guarantees~;~:*the guarantee that ~A~], when~
                         called with ~A."
                        (function-name failed-check)

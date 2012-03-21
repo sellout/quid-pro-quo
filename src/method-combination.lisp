@@ -1,6 +1,6 @@
 (in-package #:quid-pro-quo)
 
-(format *error-output*
+(format *error-output* 
 "~&;  NOTE: Quid Pro Quo was compiled with preconditions ~A, postconditions~@
    ;        ~A, and invariants ~A. If you wish to change this, you must add~@
    ;        or remove :QPQ-*-CHECKS-DISABLED in *FEATURES* and recompile the~@
@@ -67,7 +67,7 @@
   "Holds a list of values, accessed by the RESULTS function.")
 
 (defun results ()
-  "This is really only available to :ENSURE methods. It returns the values
+  "This is really only available to postconditions. It returns the values
    returned by the primary/around method, so they can be checked in the
    postcondition."
   (values-list %results))
@@ -101,7 +101,7 @@
    (before (:before))
    (primary () :required t)
    (after (:after) :order :most-specific-last)
-   (postcondition (:ensure . *)))
+   (postcondition (:guarantee . *)))
   ;; NOTE: This gives us access to the object for invariant errors. Invariants
   ;;       only exist on slot accessors. For writers, the object we care about
   ;;       is the second argument, in the other cases it's the first (and only).
@@ -110,7 +110,7 @@
   (:arguments &whole whole reader-object writer-object)
   (:generic-function gf)
   "This method combination extends the STANDARD method combination by adding
-  :REQUIRE and :ENSURE methods for pre- and postconditions, respectively. It
+  :REQUIRE and :GUARANTEE methods for pre- and postconditions, respectively. It
    also provides invariants, which are created automatically on slot-accessors
    for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
    not be created explicitly."
@@ -250,7 +250,7 @@
            ,@body)
          (defmethod ,name :require ,@(when doc-string (list doc-string))
                     ,lambda-list
-                    ,@body))))
+           ,@body))))
 
 (defmacro defguarantee (name (&rest lambda-list) &body body)
   "Adds a postcondition to the NAMEd function. It can be either a generic or
@@ -262,18 +262,18 @@
     (declare (ignore remaining-forms declarations))
     `(if (and (fboundp ',name)
               (not (typep (fdefinition ',name) 'generic-function)))
-         (defcontract ,name :ensure ,lambda-list
+         (defcontract ,name :guarantee ,lambda-list
            ,@body)
-         (defmethod ,name :ensure ,@(when doc-string (list doc-string))
+         (defmethod ,name :guarantee ,@(when doc-string (list doc-string))
                     ,lambda-list
-                    ,@body))))
+           ,@body))))
 
 #|
 (defmethod documentation ((x contracted-function) (doc-type (eql 'type)))
-  (format nil "~@[~A~]~@[~&ensures:~%~A~]"
+  (format nil "~@[~A~]~@[~&guarantees:~%~A~]"
           (call-next-method)
           (let ((method (find-if (lambda (method)
-                                   (and (eq :ensure
+                                   (and (eq :guarantee
                                             (car (method-qualifiers method)))
                                         (every (lambda (specializer)
                                                  (eq (find-class t)
@@ -283,7 +283,7 @@
             (when method (second (method-qualifiers method))))))
 
 (defmethod documentation ((x contracted-method) (doc-type (eql 'type)))
-  (format nil "~@[~A~]~@[~&requires:~%~A~]~@[~&ensures:~%~A~]"
+  (format nil "~@[~A~]~@[~&requires:~%~A~]~@[~&guarantees:~%~A~]"
           (call-next-method)
           ;; get description from most-specific applicable precondition
           ;; get descriptions from all applicable postconditions (ordered most-

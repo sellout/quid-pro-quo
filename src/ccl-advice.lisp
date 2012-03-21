@@ -14,24 +14,24 @@
                                                  :failed-check (function ,name)
                                                  :arguments ccl:arglist
                                                  :description ,doc-string)))
-                           (:ensure (let ((%results (gensym)))
-                                      `(let ((,%results nil))
-                                         (flet ((results ()
-                                                  (values-list ,%results)))
-                                           (ignore-errors
-                                             (let ((*preparing-postconditions* t)
-                                                   (*inside-contract-p* t))
-                                               ,@remaining-forms))
-                                           (setf ,%results
-                                                 (multiple-value-list (:do-it)))
-                                           (or (let ((*inside-contract-p* t))
-                                                 ,@remaining-forms)
-                                               (error 'postcondition-error
-                                                      :failed-check (function ,name)
-                                                      :arguments ccl:arglist
-                                                      :description ,doc-string))
-                                           (results)))))))
+                           (:guarantee (let ((%results (gensym)))
+                                         `(let ((,%results nil))
+                                            (flet ((results ()
+                                                     (values-list ,%results)))
+                                              (ignore-errors
+                                                (let ((*preparing-postconditions* t)
+                                                      (*inside-contract-p* t))
+                                                  ,@remaining-forms))
+                                              (setf ,%results
+                                                    (multiple-value-list (:do-it)))
+                                              (or (let ((*inside-contract-p* t))
+                                                    ,@remaining-forms)
+                                                  (error 'postcondition-error
+                                                         :failed-check (function ,name)
+                                                         :arguments ccl:arglist
+                                                         :description ,doc-string))
+                                              (results)))))))
                  :when ,(ecase type
                                (:require :before)
-                               (:ensure :around))
+                               (:guarantee :around))
                  :name ,doc-string)))
