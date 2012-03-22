@@ -350,5 +350,5 @@
     (make-instance 'function-invariant-test)))
 
 (test should-upgrade-subclass
-  (is (typep (defclass sub-invariant-test (function-invariant-test) ())
-             'contracted-class)))
+  (is-true (typep (defclass sub-invariant-test (function-invariant-test) ())
+                  'contracted-class)))
