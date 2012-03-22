@@ -236,38 +236,6 @@
          (declare (ignorable reader-object writer-object))
          ,inv-form))))
 
-(defmacro defrequirement (name (&rest lambda-list) &body body)
-  "Adds a precondition to the NAMEd function. It can be either a generic or
-   non-generic function. If it's the former, then use a specialized lambda list,
-   otherwise use an ordinary lambda list. The docstring, if any, will be used in
-   failure reports."
-  (multiple-value-bind (remaining-forms declarations doc-string)
-      (parse-body body :documentation t)
-    (declare (ignore remaining-forms declarations))
-    `(if (and (fboundp ',name)
-              (not (typep (fdefinition ',name) 'generic-function)))
-         (defcontract ,name :require ,lambda-list
-           ,@body)
-         (defmethod ,name :require ,@(when doc-string (list doc-string))
-                    ,lambda-list
-           ,@body))))
-
-(defmacro defguarantee (name (&rest lambda-list) &body body)
-  "Adds a postcondition to the NAMEd function. It can be either a generic or
-   non-generic function. If it's the former, then use a specialized lambda list,
-   otherwise use an ordinary lambda list. The docstring, if any, will be used in
-   failure reports."
-  (multiple-value-bind (remaining-forms declarations doc-string)
-      (parse-body body :documentation t)
-    (declare (ignore remaining-forms declarations))
-    `(if (and (fboundp ',name)
-              (not (typep (fdefinition ',name) 'generic-function)))
-         (defcontract ,name :guarantee ,lambda-list
-           ,@body)
-         (defmethod ,name :guarantee ,@(when doc-string (list doc-string))
-                    ,lambda-list
-           ,@body))))
-
 #|
 (defmethod documentation ((x contracted-function) (doc-type (eql 'type)))
   (format nil "~@[~A~]~@[~&guarantees:~%~A~]"

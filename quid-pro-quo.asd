@@ -23,6 +23,10 @@
                       #+ccl "ccl-advice"
                       #-(or allegro ccl) "missing-advice"
                       :depends-on ("package"))
+               (:file "macros" :depends-on (#+allegro "acl-fwrap"
+                                            #+ccl "ccl-advice"
+                                            #-(or allegro ccl)
+                                            "missing-advice"))
                (:file "system-connections" :depends-on ("metaclass")
                       :description "Enumerates conditionally-loaded files. Look
                                     here for the other files that may be loaded

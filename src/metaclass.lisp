@@ -126,9 +126,10 @@
     (function-name description lambda-list specializers lambda-body)
   (let* ((generic-function (ensure-generic-function
                             function-name
-                            ;; FIXME: SBCL blows up if we try to CHANGE-CLASS.
-                            #-sbcl #-sbcl
-                            :generic-function-class 'standard-generic-function
+                            ;; FIXME: CCL & SBCL blow up if we try to
+                            ;;        CHANGE-CLASS here.
+                            #-(or ccl sbcl) :generic-function-class
+                            #-(or ccl sbcl) 'standard-generic-function
                             :lambda-list lambda-list
                             :method-combination *contract-method-combination*))
          (method-prototype (class-prototype (find-class 'standard-method)))
