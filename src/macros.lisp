@@ -1,5 +1,10 @@
 (in-package #:quid-pro-quo)
 
+(defun description<-remaining-forms (remaining-forms)
+  (if (= 1 (length remaining-forms))
+      (car remaining-forms)
+      `(progn ,@remaining-forms)))
+
 (defmacro defrequirement (name (&rest lambda-list) &body body)
   "Adds a precondition to the NAMEd function. It can be either a generic or
    non-generic function. If it's the former, then use a specialized lambda list,
@@ -7,15 +12,19 @@
    failure reports."
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
-    (declare (ignore remaining-forms declarations))
+    (declare (ignore declarations))
     (let ((method `(progn
                      (ensure-generic-function ',name
                                               :method-combination
                                               *contract-method-combination*)
                      (defmethod ,name
-                         :require ,@(when doc-string (list doc-string))
+                         :require
+                         ,(format nil "~A"
+                                  (or doc-string
+                                      (description<-remaining-forms
+                                       remaining-forms)))
                          ,lambda-list
-                         ,@body))))
+                       ,@body))))
       (if (every #'symbolp lambda-list)
           `(if (and (fboundp ',name)
                     (not (typep (fdefinition ',name) 'generic-function)))
@@ -31,15 +40,19 @@
    failure reports."
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
-    (declare (ignore remaining-forms declarations))
+    (declare (ignore declarations))
     (let ((method `(progn
                      (ensure-generic-function ',name
                                               :method-combination
                                               *contract-method-combination*)
                      (defmethod ,name
-                         :guarantee ,@(when doc-string (list doc-string))
+                         :guarantee
+                         ,(format nil "~A"
+                                  (or doc-string
+                                      (description<-remaining-forms
+                                       remaining-forms)))
                          ,lambda-list
-                         ,@body))))
+                       ,@body))))
       (if (every #'symbolp lambda-list)
           `(if (and (fboundp ',name)
                     (not (typep (fdefinition ',name) 'generic-function)))

@@ -178,10 +178,7 @@
              (multiple-value-bind (remaining-forms declarations doc-string)
                  (parse-body body :documentation t)
                (declare (ignore declarations))
-               (or doc-string
-                   (if (= 1 (length remaining-forms))
-                       (car remaining-forms)
-                       `(progn ,@remaining-forms)))))
+               (or doc-string (description<-remaining-forms remaining-forms))))
            (function-description (fn)
              (format nil "~A~@[ (~A)~]" fn (documentation fn 'function))))
     (setf (slot-value instance 'invariants)
