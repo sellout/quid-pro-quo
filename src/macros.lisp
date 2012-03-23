@@ -8,10 +8,14 @@
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore remaining-forms declarations))
-    (let ((method `(defmethod ,name
-                       :require ,@(when doc-string (list doc-string))
-                       ,lambda-list
-                       ,@body)))
+    (let ((method `(progn
+                     (ensure-generic-function ',name
+                                              :method-combination
+                                              *contract-method-combination*)
+                     (defmethod ,name
+                         :require ,@(when doc-string (list doc-string))
+                         ,lambda-list
+                         ,@body))))
       (if (every #'symbolp lambda-list)
           `(if (and (fboundp ',name)
                     (not (typep (fdefinition ',name) 'generic-function)))
@@ -28,10 +32,14 @@
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore remaining-forms declarations))
-    (let ((method `(defmethod ,name
-                       :guarantee ,@(when doc-string (list doc-string))
-                       ,lambda-list
-                       ,@body)))
+    (let ((method `(progn
+                     (ensure-generic-function ',name
+                                              :method-combination
+                                              *contract-method-combination*)
+                     (defmethod ,name
+                         :guarantee ,@(when doc-string (list doc-string))
+                         ,lambda-list
+                         ,@body))))
       (if (every #'symbolp lambda-list)
           `(if (and (fboundp ',name)
                     (not (typep (fdefinition ',name) 'generic-function)))

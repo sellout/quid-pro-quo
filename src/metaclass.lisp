@@ -1,13 +1,5 @@
 (in-package #:quid-pro-quo)
 
-(defvar *contract-method-combination*
-  #-(or allegro cmucl sbcl)
-  (find-method-combination (class-prototype
-                            (find-class 'standard-generic-function))
-                           'contract
-                           '())
-  #+(or allegro cmucl sbcl) '(contract))
-
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
                :reader direct-class-invariants)
@@ -51,6 +43,7 @@
                      (find-class 'contracted-class)
                      (find-class 'funcallable-contracted-class)))))
 
+#-allegro
 (defmethod ensure-class-using-class :around
     (class name &rest args &key direct-superclasses metaclass &allow-other-keys)
   "This ensures that any subclass of a CONTRACTED-CLASS is also treated as a
@@ -220,14 +213,13 @@
 ;;       postcondition, but special-case it in the method-combination to error
 ;;       as an invariant.
 
-;; FIXME: CLISP explodes if we execute the following code, so we basically skip
-;;        creation invariants on CLISP.
+;; FIXME: Allegro, CLISP, and LispWorks explode if we execute the following
+;;        code, so we basically skip creation invariants on CLISP.
 
-#-clisp
+#-(or allegro clisp lispworks)
 (ensure-generic-function 'make-instance
                          :method-combination *contract-method-combination*)
 
-#-clisp
-(defmethod make-instance :guarantee ((class contracted-class) &rest initargs)
-  (declare (ignore initargs))
+#-(or allegro clisp lispworks)
+(defguarantee make-instance ((class contracted-class) &key &allow-other-keys)
   (passes-invariants-p (results)))

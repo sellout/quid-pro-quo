@@ -18,15 +18,16 @@
   :components ((:file "package")
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
-               (:file "metaclass" :depends-on ("method-combination"))
                (:file #+allegro "acl-fwrap"
                       #+ccl "ccl-advice"
                       #-(or allegro ccl) "missing-advice"
                       :depends-on ("package"))
-               (:file "macros" :depends-on (#+allegro "acl-fwrap"
+               (:file "macros" :depends-on ("method-combination"
+                                            #+allegro "acl-fwrap"
                                             #+ccl "ccl-advice"
                                             #-(or allegro ccl)
                                             "missing-advice"))
+               (:file "metaclass" :depends-on ("macros"))
                (:file "system-connections" :depends-on ("metaclass")
                       :description "Enumerates conditionally-loaded files. Look
                                     here for the other files that may be loaded

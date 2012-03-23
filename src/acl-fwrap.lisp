@@ -5,10 +5,10 @@
    functions as well."
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
+    (declare (ignore declarations))
     (let ((fwname (gensym)))
       `(progn
-         (def-fwrapper ,fwname ,@arglist
-           ,@declarations
+         (def-fwrapper ,fwname ,lambda-list
            ,@(ecase type
                     (:require `((or (progn ,@remaining-forms)
                                     (error 'precondition-error

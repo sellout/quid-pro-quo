@@ -124,7 +124,7 @@
                                  (documentation method t))))
                      ;; FIXME: CMUCL errors if this CALL-METHOD form doesn't
                      ;;        have a second argument for some reason.
-                     `(unless (call-method ,method ())
+                     `(unless (call-method ,method #+cmucl ())
                         (error ',error-type
                                :failed-check ,method
                                :arguments ,whole
@@ -235,6 +235,14 @@
              (writer-object ,writer-object))
          (declare (ignorable reader-object writer-object))
          ,inv-form))))
+
+(defvar *contract-method-combination*
+  #-(or allegro cmucl sbcl)
+  (find-method-combination (class-prototype
+                            (find-class 'standard-generic-function))
+                           'contract
+                           '())
+  #+(or allegro cmucl sbcl) '(contract))
 
 #|
 (defmethod documentation ((x contracted-function) (doc-type (eql 'type)))

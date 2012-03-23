@@ -38,7 +38,7 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 * Clozure – **YES**
 * CMUCL – **YES**
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
-* LispWorks – currently fails tests (9 pass, 27 fail)
+* LispWorks – currently fails tests (10 pass, 25 fail)
 * SBCL – **YES**
 * SCL – ?
 
