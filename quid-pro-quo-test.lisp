@@ -312,7 +312,8 @@
   ((slot1 :accessor slot1 :initarg :slot1 :initform 0 :type integer))
   (:metaclass contracted-class)
   (:invariants (lambda (instance) 
-                 (numberp (slot-value instance 'slot1)))))
+                 (numberp (slot-value instance 'slot1)))
+               "yet another invariant"))
 
 (defgeneric test-qpq-/ (arg1 arg2)
   (:method-combination contract :invariant-check nil)
