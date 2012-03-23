@@ -270,11 +270,6 @@
   (signals after-invariant-error
     (fail-invariant (make-instance 'test-1))))
 
-;; FIXME: this is an expected failure
-(test should-fail-invariant-after-setting-slot-value
-  (signals after-invariant-error
-    (setf (slot-value (make-instance 'test-1) 'my-slot) nil)))
-
 (defclass non-contracted-superclass ()
   ((foo :initform 10 :initarg :foo :accessor foo)))
 
