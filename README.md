@@ -32,15 +32,18 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 ## Implementation Support
 
-* ABCL – NO, because it’s not supported by Closer-MOP
-* Allegro (both ansi & modern) – **YES**
+* ABCL – NO, it’s not supported by [Closer-MOP][]
+* Allegro – **YES** (both ANSI & modern)
 * CLISP – **YES** but invariants are ignored (31 pass, 6 fail)
 * Clozure – **YES**
 * CMUCL – **YES**
+* Corman – NO, it’s not supported by [Closer-MOP][]
 * ECL – NO, `DEFINE-METHOD-COMBINATION` is broken
 * LispWorks – currently fails tests (10 pass, 25 fail)
 * SBCL – **YES**
-* SCL – ?
+* Scineer – ? (would be happy to find someone to test it)
+
+[Closer-MOP]: http://common-lisp.net/project/closer/closer-mop.html
 
 ## Usage
 
