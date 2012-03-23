@@ -244,9 +244,9 @@
                            '())
   #+(or allegro cmucl sbcl) '(contract))
 
-#|
-(defmethod documentation ((x contracted-function) (doc-type (eql 'type)))
-  (format nil "~@[~A~]~@[~&guarantees:~%~A~]"
+(defmethod documentation :around ((x standard-generic-function) doc-type)
+  (declare (ignore doc-type))
+  (format nil "~@[~A~]~@[~&guarantees:~%* ~A~]"
           (call-next-method)
           (let ((method (find-if (lambda (method)
                                    (and (eq :guarantee
@@ -258,11 +258,19 @@
                                  (generic-function-methods x))))
             (when method (second (method-qualifiers method))))))
 
-(defmethod documentation ((x contracted-method) (doc-type (eql 'type)))
-  (format nil "~@[~A~]~@[~&requires:~%~A~]~@[~&guarantees:~%~A~]"
-          (call-next-method)
-          ;; get description from most-specific applicable precondition
-          ;; get descriptions from all applicable postconditions (ordered most-
-          ;; to least-specific
-          ))
-|#
+(defmethod documentation :around ((x standard-method) doc-type)
+  (declare (ignore doc-type))
+  (let ((applicable-methods
+         (compute-applicable-methods-using-classes (method-generic-function x)
+                                                   (method-specializers x))))
+    (let ((precondition (find :require applicable-methods
+                              :key (compose #'car #'method-qualifiers)))
+          (postconditions (remove :guarantee applicable-methods
+                                  :test-not #'eq
+                                  :key (compose #'car #'method-qualifiers))))
+      (format nil "~@[~A~]~@[~&requires:~%* ~A~]~@[~&guarantees:~{~&* ~A~}~]"
+              (call-next-method)
+              (when precondition (second (method-qualifiers precondition)))
+              (remove nil
+                      (mapcar (compose #'second #'method-qualifiers)
+                              postconditions))))))
