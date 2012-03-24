@@ -106,8 +106,9 @@
 
 (defun passes-slot-type-invariants-p (object)
   (loop for slot in (class-slots (class-of object))
-     unless (typep (slot-value object (slot-definition-name slot))
-                   (slot-definition-type slot))
+     unless (implies (slot-boundp object (slot-definition-name slot))
+                     (typep (slot-value object (slot-definition-name slot))
+                            (slot-definition-type slot)))
      return nil
      finally (return t)))
 

@@ -315,6 +315,12 @@
                  (numberp (slot-value instance 'slot1)))
                "yet another invariant"))
 
+(defclass feature-test-2 (feature-test)
+  ((slot2 :accessor slot2 :initarg :slot2 :type integer)))
+
+(test should-pass-type-invariant-when-slot-is-unbound
+  (is (= 0 (slot1 (make-instance 'feature-test-2)))))
+
 (defgeneric test-qpq-/ (arg1 arg2)
   (:method-combination contract :invariant-check nil)
   (:method :require "first arg isn't zero" ((m feature-test) (n feature-test))
