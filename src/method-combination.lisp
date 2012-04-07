@@ -133,7 +133,10 @@
          (prepare-postconditions (methods)
            (mapcar (lambda (method) `(ignore-errors (call-method ,method)))
                    (reverse methods))))
-    (let* ((std-form (combine-standard-methods primary around before after))
+    (let* (;; FIXME: ACTUAL-GF is a workaround for implementations with a broken
+           ;;       :GENERIC-FUNCTION option
+           (actual-gf (or gf (method-generic-function (first primary))))
+           (std-form (combine-standard-methods primary around before after))
            #+:qpq-precondition-checks-disabled
            (pre-form std-form)
            #-:qpq-precondition-checks-disabled
@@ -156,7 +159,7 @@
                                   (when (and last-success
                                              (< first-failure last-success))
                                     (warn 'overly-strict-precondition-warning
-                                          :function ,gf
+                                          :function ,actual-gf
                                           :arguments ,whole
                                           :more-strict-method (nth first-failure
                                                                    ',precondition)
@@ -176,7 +179,7 @@
                                (not *inside-contract-p*))
                           `(if *check-postconditions-p*
                                (progn
-                                 ,@(unless (find gf
+                                 ,@(unless (find actual-gf
                                                  (list #'make-instance
                                                        #'initialize-instance))
                                      `((let ((*preparing-postconditions* t)
@@ -186,7 +189,9 @@
                                        (*inside-contract-p* t))
                                    ,@(apply #'test-methods
                                             postcondition
-                                            (if (eq gf #'make-instance)
+                                            (if (find actual-gf
+                                                      (list #'make-instance
+                                                            #'initialize-instance))
                                                 (list 'creation-invariant-error
                                                       :object reader-object
                                                       :description
