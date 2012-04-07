@@ -158,9 +158,8 @@
                    (passes-invariants-p object))))
 
 (defun all-direct-slots (class)
-  (apply #'append
-         (class-direct-slots class)
-         (mapcar #'all-direct-slots (class-direct-superclasses class))))
+  (append (class-direct-slots class)
+          (mappend #'all-direct-slots (class-direct-superclasses class))))
 
 (defun add-accessor-invariants (class)
   (let ((slots (all-direct-slots class)))
