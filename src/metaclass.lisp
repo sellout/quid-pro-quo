@@ -1,11 +1,42 @@
 (in-package #:quid-pro-quo)
 
+(defun ensure-contracted-function (function-name lambda-list)
+  "This both ensures that the method combination is correct as well as that the
+   correct version of STANDARD-GENERIC-FUNCTION is used (for some
+   implementations, Closer-MOP's STANDARD-GENERIC-FUNCTION is different from
+   CL's)."
+  (ensure-generic-function function-name
+                           ;; FIXME: CCL & SBCL blow up if we try to
+                           ;;        CHANGE-CLASS here.
+                           #-(or ccl sbcl) :generic-function-class
+                           #-(or ccl sbcl) 'standard-generic-function
+                           :lambda-list lambda-list
+                           :method-combination *contract-method-combination*))
+
+(defclass contracted-direct-slot-definition (standard-direct-slot-definition)
+  ()
+  (:documentation
+   "Use this for slots on CONTRACTED-CLASS so we can ensure the accessors are of
+    the proper type ahead of time, to cut down on unnecessary CHANGE-CLASSes
+    down the line."))
+
+(defmethod initialize-instance :after
+    ((instance contracted-direct-slot-definition) &key &allow-other-keys)
+  (mapc (rcurry #'ensure-contracted-function '(object))
+        (slot-definition-readers instance))
+  (mapc (rcurry #'ensure-contracted-function '(new-value object))
+        (slot-definition-writers instance)))
+
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
                :reader direct-class-invariants)
    (invariant-descriptions :initform ()))
   (:documentation
    "This is the metaclass for any classes you want to add invariants to."))
+
+(defmethod direct-slot-definition-class
+    ((class contracted-class) &key &allow-other-keys)
+  (find-class 'contracted-direct-slot-definition))
 
 (defclass funcallable-contracted-class
     (contracted-class funcallable-standard-class)
@@ -113,19 +144,15 @@
      finally (return t)))
 
 (defun passes-invariants-p (object)
+  "This checks that an instance passes all the class invariants."
   (and (passes-slot-type-invariants-p object)
        (passes-class-invariants-p object)))
 
 (defun add-invariant
     (function-name description lambda-list specializers lambda-body)
-  (let* ((generic-function (ensure-generic-function
-                            function-name
-                            ;; FIXME: CCL & SBCL blow up if we try to
-                            ;;        CHANGE-CLASS here.
-                            #-(or ccl sbcl) :generic-function-class
-                            #-(or ccl sbcl) 'standard-generic-function
-                            :lambda-list lambda-list
-                            :method-combination *contract-method-combination*))
+  "Adds an invariant to the provided generic function."
+  (let* ((generic-function (ensure-contracted-function function-name
+                                                       lambda-list))
          (method-prototype (class-prototype (find-class 'standard-method)))
          (method-function (compile nil
                                    (make-method-lambda generic-function
