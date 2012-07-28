@@ -242,12 +242,12 @@
          ,inv-form))))
 
 (defvar *contract-method-combination*
-  #-(or allegro cmucl sbcl)
+  #-(or allegro cmucl)
   (find-method-combination (class-prototype
                             (find-class 'standard-generic-function))
                            'contract
                            '())
-  #+(or allegro cmucl sbcl) '(contract))
+  #+(or allegro cmucl) '(contract))
 
 (defmethod documentation :around ((x standard-generic-function) doc-type)
   (declare (ignore doc-type))
