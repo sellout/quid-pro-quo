@@ -80,8 +80,10 @@
   "This ensures that any subclass of a CONTRACTED-CLASS is also treated as a
    CONTRACTED-CLASS (assuming the METACLASS and all DIRECT-SUPERCLASSES are
    compatible with CONTRACTED-CLASS). This helps us maintain contracts without
-   the subclasser having to know about them."
-  (flet ((get-class (class) (if (classp class) class (find-class class))))
+   the subclasser having to know about them.
+
+   NB: This doesn't work on forward-referenced classes."
+  (flet ((get-class (class) (if (classp class) class (find-class class nil))))
     (let ((contracted-class (find-class 'contracted-class)))
       (if (and ;; skip if it's already specified as a CONTRACTED-CLASS
                (not (and metaclass (subtypep metaclass contracted-class)))
