@@ -153,6 +153,9 @@
 (defun add-invariant
     (function-name description lambda-list specializers lambda-body)
   "Adds an invariant to the provided generic function."
+  #+qpq-invariant-checks-disabled
+  (values)
+  #-qpq-invariant-checks-disabled
   (let* ((generic-function (ensure-contracted-function function-name
                                                        lambda-list))
          (method-prototype (class-prototype (find-class 'standard-method)))
@@ -228,11 +231,13 @@
 
 ;; NOTE: This is done in MAKE-INSTANCE rather than INITIALIZE-INSTANCE because
 ;;       the class needs to be finalized before we can loop over the slots.
+#-qpq-invariant-checks-disabled
 (defmethod make-instance :after
     ((class contracted-class) &key &allow-other-keys)
   (mapc (lambda (function) (funcall function class))
         *invariant-initializers*))
 
+#-qpq-invariant-checks-disabled
 (defmethod reinitialize-instance :after
     ((instance contracted-class) &key invariants &allow-other-keys)
   (initialize-invariants instance invariants))
