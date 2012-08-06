@@ -154,6 +154,8 @@
     (function-name description lambda-list specializers lambda-body)
   "Adds an invariant to the provided generic function."
   #+qpq-invariant-checks-disabled
+  (declare (ignore function-name description lambda-list specializers
+                   lambda-body))
   (values)
   #-qpq-invariant-checks-disabled
   (let* ((generic-function (ensure-contracted-function function-name
