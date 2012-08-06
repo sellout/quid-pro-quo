@@ -197,7 +197,8 @@
                                                       :description
                                                       `(invariant-description
                                                         ,reader-object))
-                                                (list 'postcondition-error)))
+                                                (list 'postcondition-error
+                                                      :results %results)))
                                    (results)))
                                ,pre-form)
                           pre-form))

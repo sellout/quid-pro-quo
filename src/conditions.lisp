@@ -43,16 +43,17 @@
     responsibility to fix whatever went wrong."))
 
 (define-condition postcondition-error (contract-violation-error)
-  ()
+  ((results :initarg :results))
   (:report (lambda (condition stream)
-             (with-slots (failed-check arguments) condition
+             (with-slots (failed-check arguments results) condition
                (format stream
                        "~A failed to guarantee ~
-                       ~:[its guarantees~;~:*the guarantee that ~A~], when~
-                        called with ~A."
+                       ~:[its guarantees~;~:*the guarantee that ~A~], when ~
+                        called with ~A, resulting in ~A."
                        (function-name failed-check)
                        (description condition)
-                       arguments))))
+                       arguments
+                       results))))
   (:documentation
    "This error is signaled whenever a postcondition fails. It is the callee's
     responsibility to fix whatever is wrong."))
