@@ -20,12 +20,14 @@
                (:file "method-combination" :depends-on ("package"))
                (:file #+allegro "acl-fwrap"
                       #+ccl "ccl-advice"
-                      #-(or allegro ccl) "missing-advice"
+                      #+sbcl "sbcl-encapsulate"
+                      #-(or allegro ccl sbcl) "missing-advice"
                       :depends-on ("package"))
                (:file "macros" :depends-on ("method-combination"
                                             #+allegro "acl-fwrap"
                                             #+ccl "ccl-advice"
-                                            #-(or allegro ccl)
+                                            #+sbcl "sbcl-encapsulate"
+                                            #-(or allegro ccl sbcl)
                                             "missing-advice"))
                (:file "metaclass" :depends-on ("macros"))
                (:file "system-connections" :depends-on ("metaclass")
@@ -45,6 +47,6 @@
   :maintainer "Greg Pfeil <greg@technomadic.org>"
   :depends-on (quid-pro-quo fiveam)
   :components ((:file "quid-pro-quo-test")
-               (:file #+(or allegro ccl) "advice-tests"
-                      #-(or allegro ccl) "missing-advice-tests"
+               (:file #+(or allegro ccl sbcl) "advice-tests"
+                      #-(or allegro ccl sbcl) "missing-advice-tests"
                       :depends-on ("quid-pro-quo-test"))))
