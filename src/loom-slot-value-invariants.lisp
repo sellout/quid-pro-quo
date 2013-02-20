@@ -7,15 +7,18 @@
    invariants on it, rather than just at the level of accessors. This isn't
    fool-proof, as CL:SLOT-VALUE is still accessible, but it gets us one step
    closer."
-  (add-invariant 'loom:slot-value
-                 '(object slot-name)
-                 (list class (find-class t))
-                 '((declare (ignore slot-name))
-                   (passes-invariants-p object)))
-  (add-invariant '(setf loom:slot-value)
-                 '(new-value object slot-name)
-                 (list (find-class t) class (find-class t))
-                 '((declare (ignore new-value slot-name))
-                   (passes-invariants-p object))))
+  (let ((description (invariant-description class)))
+    (add-invariant 'loom:slot-value
+                   description
+                   '(object slot-name)
+                   (list class (find-class t))
+                   '((declare (ignore slot-name))
+                     (passes-invariants-p object)))
+    (add-invariant '(setf loom:slot-value)
+                   description
+                   '(new-value object slot-name)
+                   (list (find-class t) class (find-class t))
+                   '((declare (ignore new-value slot-name))
+                     (passes-invariants-p object)))))
 
 (push #'add-loom-slot-value-invariants *invariant-initializers*)
