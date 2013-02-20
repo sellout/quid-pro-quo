@@ -16,6 +16,7 @@
                alexandria)
   :pathname "src/"
   :components ((:file "package")
+               (:file "utilities" :depends-on ("package"))
                (:file "conditions" :depends-on ("package"))
                (:file "method-combination" :depends-on ("package"))
                (:file #+allegro "acl-fwrap"
