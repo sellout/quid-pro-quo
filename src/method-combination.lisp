@@ -114,6 +114,12 @@
    also provides invariants, which are created automatically on slot-accessors
    for classes that use the CONTRACTED-CLASS metaclass. Invariant methods should
    not be created explicitly."
+  (declare (ignore #+qpq-precondition-checks-disabled precondition-check
+                   #+qpq-precondition-checks-disabled precondition
+                   #+qpq-postcondition-checks-disabled postcondition-check
+                   #+qpq-postcondition-checks-disabled postcondition
+                   #+qpq-invariant-checks-disabled invariant-check
+                   #+qpq-invariant-checks-disabled invariant))
   (flet ((test-methods
              (methods error-type
               &rest condition-parameters &key &allow-other-keys)
@@ -233,6 +239,7 @@
                                                                   ,reader-object))))))
                               ,post-form)
                          post-form)))
+      (declare (ignore #+qpq-precondition-checks-disabled actual-gf))
       ;; NOTE: This LET form is a workaround because there's no way to specify
       ;;       IGNORABLE in the right place, so we use the outer variables to
       ;;       bind the inner ones, then we can declare the inner ones as
