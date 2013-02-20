@@ -16,6 +16,11 @@
 (defvar *check-preconditions-p* t)
 (defvar *check-postconditions-p* t)
 
+(defvar *verify-preconditions-p* t
+  "If NIL, we run only the most-specific precondition, otherwise we run all
+   preconditions to make sure no less-specific preconditions are overly
+   strict.")
+
 (defun enabled-contracts ()
   "Returns a list of arguments suitable to APPLYing to ENABLE-CONTRACTS."
   (list :invariants
@@ -151,30 +156,36 @@
                               (not *inside-contract-p*))
                          `(progn
                             (when *check-preconditions-p*
-                              (let* ((contract-results
-                                      (let ((*inside-contract-p* t))
-                                        (list ,@(call-methods precondition))))
-                                     (first-failure (position-if
-                                                     #'null
-                                                     contract-results))
-                                     (last-success (position-if-not
-                                                    #'null
-                                                    contract-results
-                                                    :from-end t)))
-                                (when first-failure
-                                  (when (and last-success
-                                             (< first-failure last-success))
-                                    (warn 'overly-strict-precondition-warning
-                                          :function ,actual-gf
-                                          :arguments ,whole
-                                          :more-strict-method (nth first-failure
-                                                                   ',precondition)
-                                          :less-strict-method (nth last-success
-                                                                   ',precondition)))
-                                  (when (= first-failure 0)
+                              (if *verify-preconditions-p*
+                                  (let* ((contract-results
+                                           (let ((*inside-contract-p* t))
+                                             (list ,@(call-methods precondition))))
+                                         (first-failure (position-if
+                                                         #'null
+                                                         contract-results))
+                                         (last-success (position-if-not
+                                                        #'null
+                                                        contract-results
+                                                        :from-end t)))
+                                    (when first-failure
+                                      (when (and last-success
+                                                 (< first-failure last-success))
+                                        (warn 'overly-strict-precondition-warning
+                                              :function ,actual-gf
+                                              :arguments ,whole
+                                              :more-strict-method (nth first-failure
+                                                                       ',precondition)
+                                              :less-strict-method (nth last-success
+                                                                       ',precondition)))
+                                      (when (= first-failure 0)
+                                        (error 'precondition-error
+                                               :failed-check ,(first precondition)
+                                               :arguments ,whole))))
+                                  (unless (let ((*inside-contract-p* t))
+                                            (call-method ,(first precondition)))
                                     (error 'precondition-error
                                            :failed-check ,(first precondition)
-                                           :arguments ,whole)))))
+                                           :arguments ,whole))))
                             ,std-form)
                          std-form))
            #+:qpq-postcondition-checks-disabled

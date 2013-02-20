@@ -13,6 +13,7 @@
            #:invariant-error #:creation-invariant-error
            #:before-invariant-error #:after-invariant-error
            #:malformed-contract-warning #:overly-strict-precondition-warning
+           #:*verify-preconditions-p*
            ;; These are for extending invariant support to alternative object
            ;; systems or other extensions (see loom-slot-value-invariants.lisp
            ;; for an example).
