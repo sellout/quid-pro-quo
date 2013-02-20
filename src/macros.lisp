@@ -47,8 +47,8 @@
                                               *contract-method-combination*)
                      (defmethod ,name
                          :guarantee
-                         ,(format nil "~A"
-                                  (or doc-string
+                         ,(or doc-string
+                              (format nil "~A"
                                       (description<-remaining-forms
                                        remaining-forms)))
                          ,lambda-list
