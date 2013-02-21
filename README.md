@@ -32,7 +32,7 @@ This file contains an implementation of contract programming for CLOS. Pre- and 
 
 ## Implementation Support
 
-* ABCL – NO, it’s not supported by [Closer-MOP][]
+* ABCL – **YES** as of 1.1.1
 * Allegro – **YES** (both ANSI & modern)
 * CLISP – **YES** but creation invariants are ignored (33 pass, 4 fail)
 * Clozure – **YES**
