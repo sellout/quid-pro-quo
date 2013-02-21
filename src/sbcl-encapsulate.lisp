@@ -5,12 +5,13 @@
    functions as well."
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
-    (let ((arglist (gensym "ARGLIST"))
+    (let ((doc-symbol (when doc-string (intern doc-string)))
+          (arglist (gensym "ARGLIST"))
           (fdefn (gensym "FDEFN")))
       `(progn
-         (sb-int:unencapsulate ',name ',(intern doc-string))
+         (sb-int:unencapsulate ',name ',doc-symbol)
          (sb-int:encapsulate
-          ',name ',(intern doc-string)
+          ',name ',doc-symbol
           '(let ((,arglist (eval 'sb-int:arg-list))
                  (,fdefn (eval 'sb-int:basic-definition)))
             (destructuring-bind ,lambda-list ,arglist
