@@ -14,8 +14,10 @@
   (:method :require "first arg > 123" ((m integer) (n number))
     (> m 123))
   (:method :require "second arg < 100" ((m number) (n integer))
+    (print "more strict")
     (< n 100))
   (:method :require "first arg = 12345678900987654321.0" ((m number) (n number))
+    (print "less strict")
     (= m 12345678900987654321.0))
 
   (:method :around ((m number) (n number))
@@ -43,13 +45,13 @@
     (is (equal (list 12345678900987654321.0 100)
                (test-qpq 12345678900987654321.0 100)))))
 
-(test should-have-correct-method-in-warning
-  (handler-case
-      (progn
-        (test-qpq 12345678900987654321.0 100)
-        (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
-    (overly-strict-precondition-warning (c)
-      (is (eq (fdefinition 'test-qpq) (slot-value c 'qpq::function))))))
+;; (test should-have-correct-method-in-warning
+;;   (handler-case
+;;       (progn
+;;         (test-qpq 12345678900987654321.0 100)
+;;         (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
+;;     (overly-strict-precondition-warning (c)
+;;       (is (eq (fdefinition 'test-qpq) (slot-value c 'qpq::function))))))
 
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
@@ -63,14 +65,14 @@
     (is (equal (list 1 12345678900987654321.0)
                (test-qpq 1 12345678900987654321.0)))))
 
-(test should-have-correct-method-in-precondition-error
-  (handler-case
-      (progn
-        (test-qpq 1 12345678900987654321.0)
-        (fail "Failed to signal PRECONDITION-ERROR."))
-    (precondition-error (c)
-      (is (eq (fdefinition 'test-qpq)
-              (method-generic-function (slot-value c 'qpq::failed-check)))))))
+;; (test should-have-correct-method-in-precondition-error
+;;   (handler-case
+;;       (progn
+;;         (test-qpq 1 12345678900987654321.0)
+;;         (fail "Failed to signal PRECONDITION-ERROR."))
+;;     (precondition-error (c)
+;;       (is (eq (fdefinition 'test-qpq)
+;;               (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 (test should-fail-result-postcondition
   (signals postcondition-error
@@ -81,14 +83,14 @@
     (is (equal (list most-positive-fixnum most-positive-fixnum)
                (test-qpq most-positive-fixnum most-positive-fixnum)))))
 
-(test should-have-correct-method-in-postcondition-error
-  (handler-case
-      (progn
-        (test-qpq most-positive-fixnum most-positive-fixnum)
-        (fail "Failed to signal POSTCONDITION-ERROR."))
-    (postcondition-error (c)
-      (is (eq (fdefinition 'test-qpq)
-              (method-generic-function (slot-value c 'qpq::failed-check)))))))
+;; (test should-have-correct-method-in-postcondition-error
+;;   (handler-case
+;;       (progn
+;;         (test-qpq most-positive-fixnum most-positive-fixnum)
+;;         (fail "Failed to signal POSTCONDITION-ERROR."))
+;;     (postcondition-error (c)
+;;       (is (eq (fdefinition 'test-qpq)
+;;               (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 ;; FIXME: This is here so that the tests compile on CLISP. However, it shouldn't
 ;;        be necessary, as defining a CONTRACTED-CLASS should guarantee that all
