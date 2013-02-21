@@ -49,7 +49,7 @@
         (test-qpq 12345678900987654321.0 100)
         (fail "Failed to signal OVERLY-STRICT-PRECONDITION-WARNING."))
     (overly-strict-precondition-warning (c)
-      (is (eq #'test-qpq (slot-value c 'qpq::function))))))
+      (is (eq (fdefinition 'test-qpq) (slot-value c 'qpq::function))))))
 
 (test should-succeed-with-integers
   (is (equal (list 124 2) (test-qpq 124 2))))
@@ -69,7 +69,7 @@
         (test-qpq 1 12345678900987654321.0)
         (fail "Failed to signal PRECONDITION-ERROR."))
     (precondition-error (c)
-      (is (eq #'test-qpq
+      (is (eq (fdefinition 'test-qpq)
               (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 (test should-fail-result-postcondition
@@ -87,7 +87,7 @@
         (test-qpq most-positive-fixnum most-positive-fixnum)
         (fail "Failed to signal POSTCONDITION-ERROR."))
     (postcondition-error (c)
-      (is (eq #'test-qpq
+      (is (eq (fdefinition 'test-qpq)
               (method-generic-function (slot-value c 'qpq::failed-check)))))))
 
 ;; FIXME: This is here so that the tests compile on CLISP. However, it shouldn't
