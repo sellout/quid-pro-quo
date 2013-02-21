@@ -1,22 +1,11 @@
 (in-package #:quid-pro-quo)
 
-(defclass contracted-direct-slot-definition (standard-direct-slot-definition)
-  ()
-  (:documentation
-   "Use this for slots on CONTRACTED-CLASS so we can ensure the accessors are of
-    the proper type ahead of time, to cut down on unnecessary CHANGE-CLASSes
-    down the line."))
-
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
                :reader direct-class-invariants)
    (invariant-descriptions :initform ()))
   (:documentation
    "This is the metaclass for any classes you want to add invariants to."))
-
-(defmethod direct-slot-definition-class
-    ((class contracted-class) &key &allow-other-keys)
-  (find-class 'contracted-direct-slot-definition))
 
 (defclass funcallable-contracted-class
     (contracted-class funcallable-standard-class)
