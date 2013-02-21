@@ -1,31 +1,11 @@
 (in-package #:quid-pro-quo)
 
-(defun ensure-contracted-function (function-name lambda-list)
-  "This both ensures that the method combination is correct as well as that the
-   correct version of STANDARD-GENERIC-FUNCTION is used (for some
-   implementations, Closer-MOP's STANDARD-GENERIC-FUNCTION is different from
-   CL's)."
-  (ensure-generic-function function-name
-                           ;; FIXME: CCL & SBCL blow up if we try to
-                           ;;        CHANGE-CLASS here.
-                           #-(or ccl sbcl) :generic-function-class
-                           #-(or ccl sbcl) 'standard-generic-function
-                           :lambda-list lambda-list
-                           :method-combination *contract-method-combination*))
-
 (defclass contracted-direct-slot-definition (standard-direct-slot-definition)
   ()
   (:documentation
    "Use this for slots on CONTRACTED-CLASS so we can ensure the accessors are of
     the proper type ahead of time, to cut down on unnecessary CHANGE-CLASSes
     down the line."))
-
-(defmethod initialize-instance :after
-    ((instance contracted-direct-slot-definition) &key &allow-other-keys)
-  (mapc (rcurry #'ensure-contracted-function '(object))
-        (slot-definition-readers instance))
-  (mapc (rcurry #'ensure-contracted-function '(new-value object))
-        (slot-definition-writers instance)))
 
 (defclass contracted-class (standard-class)
   ((invariants :initform () :initarg :invariants
@@ -250,12 +230,7 @@
 ;;       as an invariant.
 
 ;; FIXME: Allegro, CLISP, and LispWorks explode if we execute the following
-;;        code, so we basically skip creation invariants on CLISP.
-
-#-(or allegro clisp lispworks)
-(ensure-generic-function 'make-instance
-                         :method-combination *contract-method-combination*)
-
+;;        code, so we basically skip creation invariants on those.
 #-(or allegro clisp lispworks)
 (defguarantee make-instance ((class contracted-class) &key &allow-other-keys)
   (passes-invariants-p (results)))
