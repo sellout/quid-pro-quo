@@ -131,20 +131,19 @@
   (let* ((generic-function (ensure-contracted-function function-name
                                                        lambda-list))
          (method-prototype (class-prototype (find-class 'standard-method)))
-         (method-function (compile nil
-                                   (make-method-lambda generic-function
-                                                       method-prototype
-                                                       `(lambda ,lambda-list
-                                                          ,@(when description
-                                                              (list description))
-                                                          ,@lambda-body)
-                                                       nil))))
+         (method-lambda (make-method-lambda generic-function
+                                            method-prototype
+                                            `(lambda ,lambda-list
+                                               ,@(when description
+                                                   (list description))
+                                               ,@lambda-body)
+                                            nil)))
     (add-method generic-function
                 (make-instance 'standard-method
                                :qualifiers (list 'invariant description)
                                :lambda-list lambda-list
                                :specializers specializers
-                               :function method-function))))
+                               :function (compile nil method-lambda)))))
 
 (defun add-reader-invariant (reader class)
   (add-invariant reader
