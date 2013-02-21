@@ -26,6 +26,11 @@
    non-generic function. If it's the former, then use a specialized lambda list,
    otherwise use an ordinary lambda list. The docstring, if any, will be used in
    failure reports."
+  #+qpq-precondition-checks-disabled
+  (declare (ignore name lambda-list body))
+  #+qpq-precondition-checks-disabled
+  (values)
+  #-qpq-precondition-checks-disabled
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore declarations))
@@ -59,6 +64,11 @@
    non-generic function. If it's the former, then use a specialized lambda list,
    otherwise use an ordinary lambda list. The docstring, if any, will be used in
    failure reports."
+  #+qpq-postcondition-checks-disabled
+  (declare (ignore name lambda-list body))
+  #+qpq-postcondition-checks-disabled
+  (values)
+  #-qpq-postcondition-checks-disabled
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
     (declare (ignore declarations))
