@@ -125,6 +125,7 @@
   #+qpq-invariant-checks-disabled
   (declare (ignore function-name description lambda-list specializers
                    lambda-body))
+  #+qpq-invariant-checks-disabled
   (values)
   #-qpq-invariant-checks-disabled
   (let* ((generic-function (ensure-contracted-function function-name
