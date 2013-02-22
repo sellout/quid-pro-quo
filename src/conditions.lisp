@@ -72,8 +72,8 @@
   (:report (lambda (condition stream)
              (with-slots (failed-check arguments object) condition
                (format stream
-                       "Invariant violation~@[ on ~A~] before a call to ~A with~
-                       ~A~@[:~& ~A~]."
+                       "Invariant violation~@[ on ~A~] before a call to ~A ~
+                        with ~A~@[:~& ~A~]."
                        object
                        (function-name failed-check)
                        arguments
@@ -87,7 +87,7 @@
   (:report (lambda (condition stream)
              (with-slots (failed-check arguments object) condition
                (format stream
-                       "Invariant violation~@[ on ~A~] after a call to ~A with~
+                       "Invariant violation~@[ on ~A~] after a call to ~A with ~
                        ~A~@[:~& ~A~]."
                        object
                        (function-name failed-check)
@@ -102,7 +102,7 @@
   (:report (lambda (condition stream)
              (with-slots (arguments object) condition
                (format stream
-                       "Invariant violation upon creation~@[ of ~A~] called~
+                       "Invariant violation upon creation~@[ of ~A~] called ~
                         with ~A~@[:~& ~A~]."
                        object arguments (description condition)))))
   (:documentation
@@ -116,7 +116,7 @@
   (:report (lambda (condition stream)
              (with-slots (function arguments) condition
                (format stream
-                       "The contract specified for ~A when called with ~A is~
+                       "The contract specified for ~A when called with ~A is ~
                         not valid~@[: ~A~]."
                        function arguments (description condition)))))
   (:documentation
@@ -132,9 +132,9 @@
                    (function arguments more-strict-method less-strict-method)
                  condition
                (format stream
-                       "A more-specific precondition (~A) on ~A is stricter~
-                        than a less-specific precondition (~A) when called with~
-                       ~A~@[: ~A~]."
+                       "A more-specific precondition (~A) on ~A is stricter ~
+                        than a less-specific precondition (~A) when called ~
+                        with ~A~@[: ~A~]."
                        more-strict-method
                        function
                        less-strict-method
