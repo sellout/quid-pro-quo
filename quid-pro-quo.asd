@@ -13,7 +13,8 @@
   :depends-on (closer-mop
                method-combination-utilities
                asdf-system-connections
-               alexandria)
+               alexandria
+               #+sbcl sb-introspect)
   :pathname "src/"
   :components ((:file "package")
                (:file "utilities" :depends-on ("package"))
