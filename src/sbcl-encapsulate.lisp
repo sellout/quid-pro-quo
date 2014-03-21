@@ -24,10 +24,9 @@
    functions as well."
   (multiple-value-bind (remaining-forms declarations doc-string)
       (parse-body body :documentation t)
-    (let ((doc-symbol (when doc-string (intern doc-string)))
-          (fdefn (gensym "FDEFN"))
-          (arglist (gensym "ARGLIST")))
-      `(sb-encapsulate ,name ,doc-symbol ,fdefn ,arglist
+    (with-gensyms (fdefn arglist)
+      `(sb-encapsulate ,name ,(when doc-string (intern doc-string))
+           ,fdefn ,arglist
          (destructuring-bind ,lambda-list ,arglist
            ,@declarations
            ,(ecase type
@@ -37,22 +36,18 @@
                                     :failed-check (fdefinition ',name)
                                     :arguments ,arglist
                                     :description ,doc-string)))
-              (:guarantee (let ((%results (gensym "%RESULTS")))
-                            `(let ((,%results nil))
-                               (flet ((results ()
-                                        (values-list ,%results)))
-                                 (ignore-errors
-                                  (let ((*preparing-postconditions* t)
-                                        (*inside-contract-p* t))
-                                    ,@remaining-forms))
-                                 (setf ,%results
-                                       (multiple-value-list
-                                        (apply ,fdefn ,arglist)))
-                                 (or (let ((*inside-contract-p* t))
-                                       ,@remaining-forms)
-                                     (error 'postcondition-error
-                                            :failed-check (fdefinition ',name)
-                                            :arguments ,arglist
-                                            :results (results)
-                                            :description ,doc-string))
-                                 (results)))))))))))
+              (:guarantee (with-gensyms (contract)
+                            `(flet ((,contract ()
+                                      (let ((*inside-contract-p* t))
+                                        ,@remaining-forms)))
+                               (let ((*preparing-postconditions* t))
+                                 (ignore-errors (,contract)))
+                               (let ((%results (multiple-value-list
+                                                (apply ,fdefn ,arglist))))
+                                 (unless (,contract)
+                                   (error 'postcondition-error
+                                          :failed-check (fdefinition ',name)
+                                          :arguments ,arglist
+                                          :results %results
+                                          :description ,doc-string))
+                                 (values-list %results)))))))))))
