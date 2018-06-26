@@ -220,6 +220,6 @@
 
 ;; FIXME: Allegro, CLISP, and LispWorks explode if we execute the following
 ;;        code, so we basically skip creation invariants on those.
-#-(or allegro clisp lispworks)
+#-(or allegro clisp lispworks sbcl)
 (defguarantee make-instance ((class contracted-class) &key &allow-other-keys)
   (passes-invariants-p (results)))
